@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>MarcOS Tree Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -22,10 +25,10 @@
     --danger: #f85149;
     --warning: #d29922;
     --font-mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
-    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     --radius: 6px;
     --transition: 150ms ease;
-    --row-height: 28px;
+    --row-height: 24px;
     --type-folder: #58a6ff;
     --type-thread: #3fb950;
     --type-index: #d29922;
@@ -42,9 +45,9 @@
     height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.3;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
   }
@@ -56,27 +59,27 @@
     overflow: hidden;
   }
 
-  /* ── Header ── */
+  /* -- Header -- */
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
 
   .logo {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     font-family: var(--font-sans);
     color: var(--text);
@@ -100,7 +103,7 @@
     flex-wrap: wrap;
   }
 
-  /* ── View Mode Segmented Control ── */
+  /* -- View Mode Segmented Control -- */
   .view-toggle {
     display: inline-flex;
     border: 1px solid var(--border);
@@ -141,12 +144,12 @@
     flex-shrink: 0;
   }
 
-  /* ── Buttons ── */
+  /* -- Buttons -- */
   .btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 12px;
+    padding: 4px 10px;
     font-size: 12px;
     font-family: var(--font-sans);
     font-weight: 500;
@@ -193,7 +196,7 @@
     border-color: var(--danger);
   }
 
-  /* ── Toggle switch ── */
+  /* -- Toggle switch -- */
   .toggle-group {
     display: flex;
     align-items: center;
@@ -267,7 +270,7 @@
     flex-shrink: 0;
   }
 
-  /* ── Toast ── */
+  /* -- Toast -- */
   .toast {
     position: fixed;
     bottom: 20px;
@@ -291,15 +294,15 @@
     opacity: 1;
   }
 
-  /* ── Main content area ── */
+  /* -- Main content area -- */
   .main {
     flex: 1;
     overflow: auto;
-    padding: 16px 20px 60px;
+    padding: 8px 16px 60px;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* ── Tree ── */
+  /* -- Tree -- */
   .tree-container {
     font-family: var(--font-mono);
     font-size: 13px;
@@ -311,8 +314,8 @@
     display: flex;
     align-items: center;
     height: var(--row-height);
-    padding: 0 8px;
-    border-radius: 4px;
+    padding: 2px 8px;
+    border-radius: 3px;
     cursor: pointer;
     transition: background var(--transition);
     position: relative;
@@ -330,6 +333,35 @@
   .tree-row.drop-target {
     background: rgba(88, 166, 255, 0.15);
     outline: 1px dashed var(--accent);
+  }
+
+  .tree-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+    border: none;
+    background: none;
+    padding: 0;
+    border-radius: 3px;
+    transition: color var(--transition), background var(--transition);
+  }
+
+  .tree-toggle:hover {
+    color: var(--text);
+    background: var(--btn-hover);
+  }
+
+  .tree-toggle-placeholder {
+    display: inline-block;
+    width: 16px;
+    flex-shrink: 0;
   }
 
   .tree-prefix {
@@ -351,8 +383,12 @@
   .tree-description {
     color: var(--text-muted);
     font-style: italic;
-    white-space: pre;
-    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 0 8px;
   }
 
   .tree-type {
@@ -367,6 +403,16 @@
     flex-shrink: 0;
     letter-spacing: 0.3px;
     text-transform: lowercase;
+    margin-left: auto;
+  }
+
+  .collapsed-count {
+    font-size: 10px;
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    margin-left: 6px;
+    flex-shrink: 0;
+    opacity: 0.7;
   }
 
   /* Type pill colors */
@@ -381,7 +427,7 @@
   .tree-type[data-type="asset"]       { color: var(--type-asset);       background: rgba(139, 148, 158, 0.15); }
   .tree-type[data-type="tooling"]     { color: var(--type-tooling);     background: rgba(118, 131, 144, 0.15); }
 
-  /* ── Inline toolbar (desktop) ── */
+  /* -- Inline toolbar (desktop) -- */
   .node-toolbar {
     display: none;
     align-items: center;
@@ -430,13 +476,13 @@
     font-weight: 500;
   }
 
-  /* ── Inline edit mode (desktop) ── */
+  /* -- Inline edit mode (desktop) -- */
   .edit-row {
     display: flex;
     align-items: center;
     gap: 6px;
     height: var(--row-height);
-    padding: 0 8px;
+    padding: 2px 8px;
     white-space: nowrap;
   }
 
@@ -507,10 +553,10 @@
   .edit-btn.cancel { color: var(--danger); }
   .edit-btn.cancel:hover { background: rgba(248, 81, 73, 0.15); border-color: var(--danger); }
 
-  /* ── File input (hidden) ── */
+  /* -- File input (hidden) -- */
   #file-upload { display: none; }
 
-  /* ── Mobile hamburger menu ── */
+  /* -- Hamburger menu button (LEFT side) -- */
   .hamburger-btn {
     display: none;
     align-items: center;
@@ -540,16 +586,17 @@
 
   .mobile-menu-overlay.open { display: block; }
 
+  /* Slide-out from LEFT */
   .mobile-menu {
     position: fixed;
     top: 0;
-    right: 0;
+    left: 0;
     width: 260px;
     height: 100%;
     background: var(--surface);
-    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     z-index: 1001;
-    transform: translateX(100%);
+    transform: translateX(-100%);
     transition: transform 250ms ease;
     display: flex;
     flex-direction: column;
@@ -643,7 +690,7 @@
     color: var(--text);
   }
 
-  /* ── Mobile action bar (below selected node) ── */
+  /* -- Mobile action bar (below selected node) -- */
   .mobile-action-bar {
     display: flex;
     flex-wrap: wrap;
@@ -694,7 +741,7 @@
     flex-shrink: 0;
   }
 
-  /* ── Mobile edit form (below node, stacked) ── */
+  /* -- Mobile edit form (below node, stacked) -- */
   .mobile-edit-form {
     display: flex;
     flex-direction: column;
@@ -763,7 +810,7 @@
     color: var(--text-muted);
   }
 
-  /* ── Mobile tree row (reflowed) ── */
+  /* -- Mobile tree row -- */
   .mobile-view .tree-container {
     font-size: 14px;
     min-width: unset;
@@ -771,44 +818,16 @@
   }
 
   .mobile-view .tree-row {
-    flex-wrap: wrap;
     height: auto;
-    min-height: 44px;
-    padding: 8px 6px;
-    align-items: flex-start;
-    white-space: normal;
+    min-height: 36px;
+    padding: 4px 6px;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
-  .mobile-view .tree-row .mobile-line-1 {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-    min-height: 28px;
-  }
-
-  .mobile-view .tree-row .mobile-desc {
-    display: block;
-    width: 100%;
-    padding-left: 4px;
-    font-size: 12px;
-    font-style: italic;
-    color: var(--text-muted);
-    line-height: 1.4;
-    margin-top: 2px;
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  .mobile-view .tree-description { display: none !important; }
   .mobile-view .node-toolbar { display: none !important; }
 
-  /* Hide desktop inline toolbar and padding spans in mobile */
-  .mobile-view .tree-row > span[style*="white-space: pre"]:not(.tree-prefix):not(.tree-name) {
-    display: none !important;
-  }
-
-  /* ── Mobile header ── */
+  /* -- Mobile header -- */
   .mobile-view .header {
     padding: 8px 12px;
     gap: 8px;
@@ -832,10 +851,10 @@
   }
 
   .mobile-view .main {
-    padding: 8px 4px 80px;
+    padding: 4px 4px 80px;
   }
 
-  /* ── Mobile preview frame (desktop only) ── */
+  /* -- Mobile preview frame (desktop only) -- */
   .mobile-frame {
     width: 393px;
     height: 852px;
@@ -868,7 +887,7 @@
     z-index: 10;
   }
 
-  /* ── Responsive (keeps desktop header from wrapping badly on medium screens) ── */
+  /* -- Responsive -- */
   @media (max-width: 768px) {
     .header {
       padding: 8px 12px;
@@ -886,6 +905,9 @@
 <div class="app" id="app">
   <header class="header">
     <div class="header-left">
+      <button class="hamburger-btn" id="hamburger-btn" title="Menu">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
+      </button>
       <div class="logo">Marc<span>OS</span> <span class="logo-full">Tree Visualizer</span></div>
       <div class="view-toggle" id="view-toggle">
         <button data-view="auto" class="active" title="Auto-detect">
@@ -926,6 +948,14 @@
     </div>
 
     <div class="header-right">
+      <button class="btn" id="btn-collapse-all" title="Collapse All">
+        <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8z"/></svg>
+        <span class="btn-text">Collapse</span>
+      </button>
+      <button class="btn" id="btn-expand-all" title="Expand All">
+        <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 1a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 7.293V1.5A.5.5 0 0 1 8 1zM1 14.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z"/></svg>
+        <span class="btn-text">Expand</span>
+      </button>
       <button class="btn" id="btn-upload" title="Upload (.md, .json, .txt)">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 12.5a.5.5 0 0 1-1 0V6.707l-1.146 1.147a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L3.5 6.707V12.5zm3.5-9a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/></svg>
         <span class="btn-text">Upload</span>
@@ -938,9 +968,6 @@
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
         <span class="btn-text">Copy</span>
       </button>
-      <button class="hamburger-btn" id="hamburger-btn" title="Menu">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
-      </button>
       <input type="file" id="file-upload" accept=".md,.json,.txt">
     </div>
   </header>
@@ -950,12 +977,23 @@
   </div>
 </div>
 
-<!-- Mobile slide-out menu -->
+<!-- Mobile slide-out menu (from LEFT) -->
 <div class="mobile-menu-overlay" id="menu-overlay"></div>
 <div class="mobile-menu" id="mobile-menu">
   <div class="mobile-menu-header">
     <span>Menu</span>
     <button class="mobile-menu-close" id="menu-close">&times;</button>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-title">Tree</div>
+    <button class="menu-btn" id="menu-collapse-all">
+      <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8z"/></svg>
+      Collapse All
+    </button>
+    <button class="menu-btn" id="menu-expand-all">
+      <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 1a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 7.293V1.5A.5.5 0 0 1 8 1zM1 14.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z"/></svg>
+      Expand All
+    </button>
   </div>
   <div class="menu-section">
     <div class="menu-section-title">Actions</div>
@@ -997,10 +1035,10 @@
 (function() {
   'use strict';
 
-  // ── Type system ──
+  // -- Type system --
   const TYPES = ['folder','thread','index','config','record','pipeline','capture','deliverable','asset','tooling'];
 
-  // ── Default tree data ──
+  // -- Default tree data --
   const DEFAULT_TREE = [
     { name: '~/Obsidian', desc: 'vault root', type: 'folder', children: [
       { name: 'CLAUDE.md', desc: 'the brain \u2014 full personal context', type: 'config' },
@@ -1072,12 +1110,13 @@
     ]},
   ];
 
-  // ── State ──
+  // -- State --
   let treeData = [];
   let selectedId = null;
   let editingId = null;
   let nextId = 1;
   let viewMode = 'auto'; // 'auto' | 'desktop' | 'mobile'
+  let collapsedNodes = new Set(); // Set of node IDs that are collapsed
 
   // Assign IDs recursively
   function assignIds(nodes) {
@@ -1093,11 +1132,48 @@
     return JSON.parse(JSON.stringify(nodes));
   }
 
-  // ── View mode detection ──
+  // Count all descendants of a node
+  function countDescendants(node) {
+    if (!node.children || node.children.length === 0) return 0;
+    let count = node.children.length;
+    for (const child of node.children) {
+      count += countDescendants(child);
+    }
+    return count;
+  }
+
+  // Check if a node has children
+  function hasChildren(node) {
+    return node.children && node.children.length > 0;
+  }
+
+  // Collapse/expand all nodes
+  function collapseAll() {
+    function walkCollapse(nodes) {
+      for (const node of nodes) {
+        if (hasChildren(node)) {
+          collapsedNodes.add(node.id);
+        }
+        walkCollapse(node.children || []);
+      }
+    }
+    walkCollapse(treeData);
+    render();
+    saveToStorage();
+    showToast('All collapsed');
+  }
+
+  function expandAll() {
+    collapsedNodes.clear();
+    render();
+    saveToStorage();
+    showToast('All expanded');
+  }
+
+  // -- View mode detection --
   function isMobileActive() {
     if (viewMode === 'desktop') return false;
     if (viewMode === 'mobile') return true;
-    // Auto: detect based on screen width
     return window.innerWidth <= 768;
   }
 
@@ -1109,14 +1185,12 @@
     } else {
       app.classList.remove('mobile-view');
     }
-    // Sync menu toggles with header toggles
     document.getElementById('menu-toggle-fancy').checked = document.getElementById('toggle-fancy').checked;
     document.getElementById('menu-toggle-trailing').checked = document.getElementById('toggle-trailing').checked;
   }
 
   function setViewMode(mode) {
     viewMode = mode;
-    // Update segmented control
     document.querySelectorAll('#view-toggle button').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.view === mode);
     });
@@ -1125,8 +1199,9 @@
     saveToStorage();
   }
 
-  // ── Persistence ──
+  // -- Persistence --
   const STORAGE_KEY = 'marcos-tree-visualizer-v2';
+  const COLLAPSED_KEY = 'marcos-tree-collapsed-v1';
 
   function saveToStorage() {
     try {
@@ -1137,6 +1212,7 @@
         viewMode: viewMode,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsedNodes]));
     } catch (e) { /* storage full or disabled */ }
   }
 
@@ -1148,7 +1224,15 @@
     } catch (e) { return null; }
   }
 
-  // ── Toast ──
+  function loadCollapsedState() {
+    try {
+      const raw = localStorage.getItem(COLLAPSED_KEY);
+      if (!raw) return new Set();
+      return new Set(JSON.parse(raw));
+    } catch (e) { return new Set(); }
+  }
+
+  // -- Toast --
   let toastTimer;
   function showToast(msg) {
     const el = document.getElementById('toast');
@@ -1158,7 +1242,7 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
   }
 
-  // ── Menu ──
+  // -- Menu --
   function openMenu() {
     document.getElementById('menu-overlay').classList.add('open');
     document.getElementById('mobile-menu').classList.add('open');
@@ -1169,7 +1253,7 @@
     document.getElementById('mobile-menu').classList.remove('open');
   }
 
-  // ── Tree rendering helpers ──
+  // -- Tree rendering helpers --
   function isFolder(node) {
     return node.type === 'folder' || node.name.endsWith('/');
   }
@@ -1187,10 +1271,9 @@
     return name;
   }
 
-  // Flatten tree into rows with metadata
+  // Flatten tree into rows with metadata (respects collapsed state)
   function flattenTree(nodes, depth, parentPrefixes) {
     const fancy = document.getElementById('toggle-fancy').checked;
-    const mobile = isMobileActive();
     const rows = [];
 
     for (let i = 0; i < nodes.length; i++) {
@@ -1200,39 +1283,23 @@
       let prefix = '';
       if (depth > 0) {
         prefix = parentPrefixes;
-        if (mobile) {
-          // Simplified, narrower tree chars for mobile
-          if (fancy) {
-            prefix += isLast ? '\u2514 ' : '\u251C ' ;
-          } else {
-            prefix += isLast ? '` ' : '| ';
-          }
+        if (fancy) {
+          prefix += isLast ? '\u2514\u2500 ' : '\u251C\u2500 ';
         } else {
-          if (fancy) {
-            prefix += isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
-          } else {
-            prefix += isLast ? '`-- ' : '|-- ';
-          }
+          prefix += isLast ? '`- ' : '|- ';
         }
       }
 
       rows.push({ node, prefix, depth });
 
-      if (node.children && node.children.length > 0) {
+      // Only render children if not collapsed
+      if (hasChildren(node) && !collapsedNodes.has(node.id)) {
         let childPrefix = parentPrefixes;
         if (depth > 0) {
-          if (mobile) {
-            if (fancy) {
-              childPrefix += isLast ? '  ' : '\u2502 ';
-            } else {
-              childPrefix += isLast ? '  ' : '| ';
-            }
+          if (fancy) {
+            childPrefix += isLast ? '   ' : '\u2502  ';
           } else {
-            if (fancy) {
-              childPrefix += isLast ? '    ' : '\u2502   ';
-            } else {
-              childPrefix += isLast ? '    ' : '|   ';
-            }
+            childPrefix += isLast ? '   ' : '|  ';
           }
         }
         const childRows = flattenTree(node.children, depth + 1, childPrefix);
@@ -1243,63 +1310,34 @@
     return rows;
   }
 
-  // Compute column positions for alignment (desktop only)
-  function computeColumns(rows) {
-    let maxNameCol = 0;
-    let maxDescCol = 0;
-
-    for (const row of rows) {
-      const nameLen = row.prefix.length + displayName(row.node).length;
-      if (nameLen > maxNameCol) maxNameCol = nameLen;
-    }
-
-    const descStart = maxNameCol + 8;
-
-    for (const row of rows) {
-      const desc = row.node.desc || '';
-      const descLen = desc.length;
-      if (descLen > maxDescCol) maxDescCol = descLen;
-    }
-
-    const typeStart = descStart + maxDescCol + 4;
-
-    return { descStart, typeStart };
-  }
-
-  // ── Render tree ──
+  // -- Render tree --
   function render() {
     applyViewMode();
     const container = document.getElementById('tree-container');
     const mobile = isMobileActive();
     const rows = flattenTree(treeData, 0, '');
-    const cols = mobile ? null : computeColumns(rows);
 
     container.innerHTML = '';
 
     for (const row of rows) {
       if (editingId === row.node.id) {
         if (mobile) {
-          container.appendChild(createMobileViewRow(row, true));
+          container.appendChild(createViewRow(row, true));
           container.appendChild(createMobileEditForm(row));
         } else {
-          container.appendChild(createEditRow(row, cols));
+          container.appendChild(createEditRow(row));
         }
       } else {
-        if (mobile) {
-          container.appendChild(createMobileViewRow(row, false));
-          // If selected, add action bar below
-          if (selectedId === row.node.id) {
-            container.appendChild(createMobileActionBar(row.node.id));
-          }
-        } else {
-          container.appendChild(createViewRow(row, cols));
+        container.appendChild(createViewRow(row, false));
+        // If mobile and selected, add action bar below
+        if (mobile && selectedId === row.node.id) {
+          container.appendChild(createMobileActionBar(row.node.id));
         }
       }
     }
 
     saveToStorage();
 
-    // Scroll selected node into view
     if (selectedId) {
       requestAnimationFrame(() => {
         const el = document.querySelector(`[data-id="${selectedId}"]`);
@@ -1308,11 +1346,36 @@
     }
   }
 
-  // ── Desktop view row ──
-  function createViewRow(row, cols) {
+  // -- Unified view row (same layout for desktop and mobile) --
+  // Layout: [toggle] [prefix] [name] [description (ellipsis)] [type pill] [toolbar]
+  function createViewRow(row, isEditing) {
     const div = document.createElement('div');
-    div.className = 'tree-row' + (selectedId === row.node.id ? ' selected' : '');
+    div.className = 'tree-row' + (selectedId === row.node.id && !isEditing ? ' selected' : '');
     div.dataset.id = row.node.id;
+
+    // Collapse/expand toggle
+    if (hasChildren(row.node)) {
+      const toggle = document.createElement('button');
+      toggle.className = 'tree-toggle';
+      const isCollapsed = collapsedNodes.has(row.node.id);
+      toggle.textContent = isCollapsed ? '\u25B6' : '\u25BC';
+      toggle.title = isCollapsed ? 'Expand' : 'Collapse';
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (collapsedNodes.has(row.node.id)) {
+          collapsedNodes.delete(row.node.id);
+        } else {
+          collapsedNodes.add(row.node.id);
+        }
+        render();
+        saveToStorage();
+      });
+      div.appendChild(toggle);
+    } else {
+      const placeholder = document.createElement('span');
+      placeholder.className = 'tree-toggle-placeholder';
+      div.appendChild(placeholder);
+    }
 
     const prefixSpan = document.createElement('span');
     prefixSpan.className = 'tree-prefix';
@@ -1325,30 +1388,23 @@
     nameSpan.textContent = name;
     div.appendChild(nameSpan);
 
-    const nameLen = row.prefix.length + name.length;
-    const descPad = Math.max(cols.descStart - nameLen, 4);
-
-    const desc = row.node.desc || '';
-    if (desc) {
-      const descSpan = document.createElement('span');
-      descSpan.className = 'tree-description';
-      descSpan.textContent = ' '.repeat(descPad) + desc;
-      div.appendChild(descSpan);
-
-      const descLen = cols.descStart + desc.length;
-      const typePad = Math.max(cols.typeStart - descLen, 3);
-      const padSpan = document.createElement('span');
-      padSpan.style.whiteSpace = 'pre';
-      padSpan.textContent = ' '.repeat(typePad);
-      div.appendChild(padSpan);
-    } else {
-      const typePad = Math.max(cols.typeStart - nameLen, 3);
-      const padSpan = document.createElement('span');
-      padSpan.style.whiteSpace = 'pre';
-      padSpan.textContent = ' '.repeat(typePad);
-      div.appendChild(padSpan);
+    // Collapsed count indicator
+    if (hasChildren(row.node) && collapsedNodes.has(row.node.id)) {
+      const countSpan = document.createElement('span');
+      countSpan.className = 'collapsed-count';
+      const count = countDescendants(row.node);
+      countSpan.textContent = '(+' + count + ')';
+      div.appendChild(countSpan);
     }
 
+    // Description (inline, truncates with ellipsis)
+    const desc = row.node.desc || '';
+    const descSpan = document.createElement('span');
+    descSpan.className = 'tree-description';
+    descSpan.textContent = desc;
+    div.appendChild(descSpan);
+
+    // Type pill (far right)
     if (row.node.type) {
       const typeSpan = document.createElement('span');
       typeSpan.className = 'tree-type';
@@ -1357,7 +1413,7 @@
       div.appendChild(typeSpan);
     }
 
-    // Inline toolbar (desktop)
+    // Inline toolbar (desktop only, shows on selected)
     const toolbar = document.createElement('span');
     toolbar.className = 'node-toolbar';
     toolbar.innerHTML = `
@@ -1372,11 +1428,19 @@
     `;
     div.appendChild(toolbar);
 
-    div.addEventListener('click', (e) => {
-      if (e.target.closest('.node-toolbar')) return;
-      selectedId = (selectedId === row.node.id) ? null : row.node.id;
-      render();
-    });
+    if (!isEditing) {
+      div.addEventListener('click', (e) => {
+        if (e.target.closest('.node-toolbar')) return;
+        if (e.target.closest('.tree-toggle')) return;
+        if (isMobileActive()) {
+          selectedId = (selectedId === row.node.id) ? null : row.node.id;
+          editingId = null;
+        } else {
+          selectedId = (selectedId === row.node.id) ? null : row.node.id;
+        }
+        render();
+      });
+    }
 
     toolbar.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action]');
@@ -1388,66 +1452,7 @@
     return div;
   }
 
-  // ── Mobile view row (reflowed: name+type on line 1, desc on line 2) ──
-  function createMobileViewRow(row, isEditing) {
-    const div = document.createElement('div');
-    div.className = 'tree-row' + (selectedId === row.node.id && !isEditing ? ' selected' : '');
-    div.dataset.id = row.node.id;
-
-    // Line 1: prefix + name + type pill
-    const line1 = document.createElement('div');
-    line1.className = 'mobile-line-1';
-
-    const prefixSpan = document.createElement('span');
-    prefixSpan.className = 'tree-prefix';
-    prefixSpan.textContent = row.prefix;
-    line1.appendChild(prefixSpan);
-
-    const name = displayName(row.node);
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'tree-name' + (isFolder(row.node) ? ' is-folder' : '');
-    nameSpan.textContent = name;
-    line1.appendChild(nameSpan);
-
-    if (row.node.type) {
-      const spacer = document.createElement('span');
-      spacer.textContent = ' ';
-      line1.appendChild(spacer);
-
-      const typeSpan = document.createElement('span');
-      typeSpan.className = 'tree-type';
-      typeSpan.dataset.type = row.node.type;
-      typeSpan.textContent = row.node.type;
-      line1.appendChild(typeSpan);
-    }
-
-    div.appendChild(line1);
-
-    // Line 2: description (if exists)
-    const desc = row.node.desc || '';
-    if (desc) {
-      const descDiv = document.createElement('div');
-      descDiv.className = 'mobile-desc';
-      // Indent the description to align with name (account for prefix width)
-      const indentChars = row.prefix.length;
-      descDiv.style.paddingLeft = (indentChars * 8.4 + 4) + 'px'; // Approximate ch width at 14px mono
-      descDiv.textContent = desc;
-      div.appendChild(descDiv);
-    }
-
-    if (!isEditing) {
-      div.addEventListener('click', (e) => {
-        if (e.target.closest('.mobile-action-bar')) return;
-        selectedId = (selectedId === row.node.id) ? null : row.node.id;
-        editingId = null;
-        render();
-      });
-    }
-
-    return div;
-  }
-
-  // ── Mobile action bar (below selected node) ──
+  // -- Mobile action bar (below selected node) --
   function createMobileActionBar(nodeId) {
     const bar = document.createElement('div');
     bar.className = 'mobile-action-bar';
@@ -1478,7 +1483,7 @@
     return bar;
   }
 
-  // ── Mobile edit form (stacked inputs below node) ──
+  // -- Mobile edit form (stacked inputs below node) --
   function createMobileEditForm(row) {
     const form = document.createElement('div');
     form.className = 'mobile-edit-form';
@@ -1524,7 +1529,6 @@
     actions.appendChild(confirmBtn);
     form.appendChild(actions);
 
-    // Keyboard: Enter to save
     function handleKey(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -1544,11 +1548,16 @@
     return form;
   }
 
-  // ── Desktop edit row ──
-  function createEditRow(row, cols) {
+  // -- Desktop edit row --
+  function createEditRow(row) {
     const div = document.createElement('div');
     div.className = 'edit-row';
     div.dataset.id = row.node.id;
+
+    // Toggle placeholder for alignment
+    const placeholder = document.createElement('span');
+    placeholder.className = 'tree-toggle-placeholder';
+    div.appendChild(placeholder);
 
     const prefixSpan = document.createElement('span');
     prefixSpan.className = 'tree-prefix';
@@ -1624,7 +1633,7 @@
     return div;
   }
 
-  // ── Tree operations ──
+  // -- Tree operations --
 
   function findNode(id, nodes, parent) {
     for (let i = 0; i < nodes.length; i++) {
@@ -1654,6 +1663,8 @@
         const child = newNode();
         if (!node.children) node.children = [];
         node.children.push(child);
+        // Make sure parent is expanded
+        collapsedNodes.delete(node.id);
         selectedId = child.id;
         editingId = child.id;
         render();
@@ -1673,6 +1684,8 @@
         if (!prevSibling.children) prevSibling.children = [];
         siblings.splice(index, 1);
         prevSibling.children.push(node);
+        // Make sure the new parent is expanded
+        collapsedNodes.delete(prevSibling.id);
         render();
         break;
       }
@@ -1708,6 +1721,7 @@
       case 'delete': {
         siblings.splice(index, 1);
         if (selectedId === nodeId) selectedId = null;
+        collapsedNodes.delete(nodeId);
         render();
         showToast('Deleted');
         break;
@@ -1747,7 +1761,7 @@
     render();
   }
 
-  // ── Export / Copy ──
+  // -- Export / Copy --
 
   function treeToMd(nodes, indent) {
     const trailing = document.getElementById('toggle-trailing').checked;
@@ -1774,9 +1788,6 @@
     const trailing = document.getElementById('toggle-trailing').checked;
     let out = '';
 
-    const allRows = flattenTree(nodes, depth, parentPrefixes);
-    const cols = computeColumns(flattenTree(treeData, 0, ''));
-
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const isLast = i === nodes.length - 1;
@@ -1797,21 +1808,13 @@
 
       let line = prefix + name;
 
-      const nameLen = prefix.length + name.length;
       const desc = node.desc || '';
       if (desc) {
-        const descPad = Math.max(cols.descStart - nameLen, 4);
-        line += ' '.repeat(descPad) + '# ' + desc;
+        line += '  # ' + desc;
       }
 
       if (node.type) {
-        if (!desc) {
-          const typePad = Math.max(cols.descStart - nameLen, 4);
-          line += ' '.repeat(typePad);
-        } else {
-          line += '  ';
-        }
-        line += '[' + node.type + ']';
+        line += '  [' + node.type + ']';
       }
 
       out += line + '\n';
@@ -1832,7 +1835,7 @@
     return out;
   }
 
-  // ── Import / Parse ──
+  // -- Import / Parse --
 
   function parseMdTree(text) {
     const lines = text.split('\n').filter(l => l.trim());
@@ -1928,7 +1931,7 @@
     return root;
   }
 
-  // ── Keyboard shortcuts ──
+  // -- Keyboard shortcuts --
 
   document.addEventListener('keydown', (e) => {
     if (editingId) return;
@@ -1978,6 +1981,27 @@
       e.preventDefault();
       handleAction('sibling', selectedId);
     }
+
+    // ArrowLeft/Right to collapse/expand
+    if (e.key === 'ArrowLeft' && selectedId && !editingId) {
+      const found = findNode(selectedId, treeData, null);
+      if (found && hasChildren(found.node) && !collapsedNodes.has(found.node.id)) {
+        e.preventDefault();
+        collapsedNodes.add(found.node.id);
+        render();
+        saveToStorage();
+      }
+    }
+
+    if (e.key === 'ArrowRight' && selectedId && !editingId) {
+      const found = findNode(selectedId, treeData, null);
+      if (found && hasChildren(found.node) && collapsedNodes.has(found.node.id)) {
+        e.preventDefault();
+        collapsedNodes.delete(found.node.id);
+        render();
+        saveToStorage();
+      }
+    }
   });
 
   function navigateSelection(direction) {
@@ -1991,7 +2015,7 @@
     }
   }
 
-  // ── Perform action (shared between desktop buttons and menu) ──
+  // -- Perform action (shared between desktop buttons and menu) --
   function doUpload() {
     document.getElementById('file-upload').click();
     closeMenu();
@@ -2020,17 +2044,21 @@
     closeMenu();
   }
 
-  // ── Event bindings ──
+  // -- Event bindings --
 
   // Desktop buttons
   document.getElementById('btn-upload').addEventListener('click', doUpload);
   document.getElementById('btn-export').addEventListener('click', doExport);
   document.getElementById('btn-copy').addEventListener('click', doCopy);
+  document.getElementById('btn-collapse-all').addEventListener('click', collapseAll);
+  document.getElementById('btn-expand-all').addEventListener('click', expandAll);
 
   // Mobile menu buttons
   document.getElementById('menu-upload').addEventListener('click', doUpload);
   document.getElementById('menu-export').addEventListener('click', doExport);
   document.getElementById('menu-copy').addEventListener('click', doCopy);
+  document.getElementById('menu-collapse-all').addEventListener('click', () => { collapseAll(); closeMenu(); });
+  document.getElementById('menu-expand-all').addEventListener('click', () => { expandAll(); closeMenu(); });
 
   // Hamburger
   document.getElementById('hamburger-btn').addEventListener('click', openMenu);
@@ -2047,6 +2075,7 @@
       const ext = file.name.split('.').pop().toLowerCase();
 
       nextId = 1;
+      collapsedNodes.clear();
       try {
         if (ext === 'json') {
           const json = JSON.parse(text);
@@ -2123,7 +2152,7 @@
     e.stopPropagation();
   }, { passive: true });
 
-  // ── Init ──
+  // -- Init --
   const saved = loadFromStorage();
   if (saved && saved.tree && saved.tree.length > 0) {
     treeData = saved.tree;
@@ -2139,6 +2168,9 @@
     nextId = 1;
     assignIds(treeData);
   }
+
+  // Load collapsed state
+  collapsedNodes = loadCollapsedState();
 
   // Apply saved view mode to toggle buttons
   document.querySelectorAll('#view-toggle button').forEach(btn => {
