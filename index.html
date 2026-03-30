@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarcOS Tree Visualizer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --btn-bg: #21262d;
+    --btn-hover: #30363d;
+    --input-bg: #0d1117;
+    --success: #3fb950;
+    --danger: #f85149;
+    --warning: #d29922;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --radius: 6px;
+    --transition: 150ms ease;
+    --row-height: 28px;
+    --type-folder: #58a6ff;
+    --type-thread: #3fb950;
+    --type-index: #d29922;
+    --type-config: #bc8cff;
+    --type-record: #39d2c0;
+    --type-pipeline: #f0883e;
+    --type-capture: #f778ba;
+    --type-deliverable: #f85149;
+    --type-asset: #8b949e;
+    --type-tooling: #768390;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    color: var(--text);
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .btn:hover {
+    background: var(--btn-hover);
+    border-color: var(--text-muted);
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .btn-primary {
+    background: rgba(88, 166, 255, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-primary:hover {
+    background: rgba(88, 166, 255, 0.25);
+    border-color: var(--accent-hover);
+  }
+
+  .btn-danger {
+    color: var(--danger);
+  }
+
+  .btn-danger:hover {
+    background: rgba(248, 81, 73, 0.15);
+    border-color: var(--danger);
+  }
+
+  /* ── Toggle switch ── */
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .toggle-label:hover { color: var(--text); }
+
+  .toggle-switch {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--btn-bg);
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    transition: background var(--transition), border-color var(--transition);
+    cursor: pointer;
+  }
+
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform var(--transition), background var(--transition);
+  }
+
+  .toggle-switch input:checked + .toggle-track {
+    background: rgba(88, 166, 255, 0.2);
+    border-color: var(--accent);
+  }
+
+  .toggle-switch input:checked + .toggle-track::after {
+    transform: translateX(14px);
+    background: var(--accent);
+  }
+
+  .divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    padding: 8px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    color: var(--text);
+    z-index: 9999;
+    opacity: 0;
+    transition: transform 250ms ease, opacity 250ms ease;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* ── Main content area ── */
+  .main {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 20px 60px;
+  }
+
+  /* ── Mobile preview frame ── */
+  .mobile-frame {
+    width: 393px;
+    height: 852px;
+    margin: 20px auto;
+    border: 2px solid var(--border);
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+    box-shadow: 0 0 0 4px #000, 0 0 40px rgba(0,0,0,0.5);
+  }
+
+  .mobile-frame .mobile-inner {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 40px 12px 20px;
+  }
+
+  .mobile-frame::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 24px;
+    background: #000;
+    border-radius: 12px;
+    z-index: 10;
+  }
+
+  /* ── Tree ── */
+  .tree-container {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1;
+    min-width: fit-content;
+  }
+
+  .tree-row {
+    display: flex;
+    align-items: center;
+    height: var(--row-height);
+    padding: 0 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background var(--transition);
+    position: relative;
+    white-space: nowrap;
+  }
+
+  .tree-row:hover {
+    background: rgba(88, 166, 255, 0.04);
+  }
+
+  .tree-row.selected {
+    background: rgba(88, 166, 255, 0.1);
+  }
+
+  .tree-row.drop-target {
+    background: rgba(88, 166, 255, 0.15);
+    outline: 1px dashed var(--accent);
+  }
+
+  .tree-prefix {
+    color: var(--border);
+    white-space: pre;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .tree-name {
+    flex-shrink: 0;
+    white-space: pre;
+  }
+
+  .tree-name.is-folder {
+    color: var(--accent);
+  }
+
+  .tree-description {
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: pre;
+    flex-shrink: 0;
+  }
+
+  .tree-type {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    text-transform: lowercase;
+  }
+
+  /* Type pill colors */
+  .tree-type[data-type="folder"]      { color: var(--type-folder);      background: rgba(88, 166, 255, 0.15); }
+  .tree-type[data-type="thread"]      { color: var(--type-thread);      background: rgba(63, 185, 80, 0.15); }
+  .tree-type[data-type="index"]       { color: var(--type-index);       background: rgba(210, 153, 34, 0.15); }
+  .tree-type[data-type="config"]      { color: var(--type-config);      background: rgba(188, 140, 255, 0.15); }
+  .tree-type[data-type="record"]      { color: var(--type-record);      background: rgba(57, 210, 192, 0.15); }
+  .tree-type[data-type="pipeline"]    { color: var(--type-pipeline);    background: rgba(240, 136, 62, 0.15); }
+  .tree-type[data-type="capture"]     { color: var(--type-capture);     background: rgba(247, 120, 186, 0.15); }
+  .tree-type[data-type="deliverable"] { color: var(--type-deliverable); background: rgba(248, 81, 73, 0.15); }
+  .tree-type[data-type="asset"]       { color: var(--type-asset);       background: rgba(139, 148, 158, 0.15); }
+  .tree-type[data-type="tooling"]     { color: var(--type-tooling);     background: rgba(118, 131, 144, 0.15); }
+
+  /* ── Inline toolbar ── */
+  .node-toolbar {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .tree-row.selected .node-toolbar {
+    display: flex;
+  }
+
+  .tb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 22px;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all var(--transition);
+    padding: 0;
+  }
+
+  .tb:hover {
+    background: var(--btn-bg);
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .tb.tb-delete:hover {
+    color: var(--danger);
+    background: rgba(248, 81, 73, 0.1);
+    border-color: rgba(248, 81, 73, 0.3);
+  }
+
+  .tb-label {
+    width: auto;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* ── Inline edit mode ── */
+  .edit-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--row-height);
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+
+  .edit-row .tree-prefix {
+    color: var(--border);
+  }
+
+  .edit-input {
+    background: var(--input-bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 2px 6px;
+    outline: none;
+    height: 22px;
+  }
+
+  .edit-input:focus {
+    border-color: var(--accent-hover);
+    box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.3);
+  }
+
+  .edit-input.name-input { width: 200px; }
+  .edit-input.desc-input { width: 280px; color: var(--text-muted); font-style: italic; }
+
+  .edit-select {
+    background: var(--input-bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    padding: 2px 4px;
+    outline: none;
+    height: 22px;
+    cursor: pointer;
+  }
+
+  .edit-select:focus {
+    border-color: var(--accent-hover);
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 4px;
+  }
+
+  .edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all var(--transition);
+  }
+
+  .edit-btn.confirm { color: var(--success); }
+  .edit-btn.confirm:hover { background: rgba(63, 185, 80, 0.15); border-color: var(--success); }
+  .edit-btn.cancel { color: var(--danger); }
+  .edit-btn.cancel:hover { background: rgba(248, 81, 73, 0.15); border-color: var(--danger); }
+
+  /* ── File input (hidden) ── */
+  #file-upload { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .header {
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .btn .btn-text { display: none; }
+    .btn { padding: 6px 8px; }
+
+    .logo { font-size: 14px; }
+
+    .main { padding: 8px 8px 60px; }
+
+    .tree-container { font-size: 12px; }
+
+    .tree-row {
+      min-height: 44px;
+      height: auto;
+      padding: 6px 4px;
+    }
+
+    .tb { width: 44px; height: 40px; font-size: 16px; }
+
+    .edit-input.name-input { width: 120px; }
+    .edit-input.desc-input { width: 140px; }
+
+    .node-toolbar { gap: 1px; margin-left: 6px; }
+  }
+
+  @media (max-width: 480px) {
+    .toggle-group .toggle-text { display: none; }
+    .header-center { gap: 4px; }
+    .tree-description { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">Marc<span>OS</span> Tree Visualizer</div>
+    </div>
+
+    <div class="header-center">
+      <div class="toggle-group">
+        <label class="toggle-label">
+          <div class="toggle-switch">
+            <input type="checkbox" id="toggle-fancy" checked>
+            <div class="toggle-track"></div>
+          </div>
+          <span class="toggle-text">Fancy</span>
+        </label>
+      </div>
+
+      <div class="toggle-group">
+        <label class="toggle-label">
+          <div class="toggle-switch">
+            <input type="checkbox" id="toggle-trailing" checked>
+            <div class="toggle-track"></div>
+          </div>
+          <span class="toggle-text">Trailing /</span>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="toggle-group">
+        <label class="toggle-label">
+          <div class="toggle-switch">
+            <input type="checkbox" id="toggle-mobile">
+            <div class="toggle-track"></div>
+          </div>
+          <span class="toggle-text">Mobile Preview</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="btn" id="btn-upload" title="Upload (.md, .json, .txt)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 12.5a.5.5 0 0 1-1 0V6.707l-1.146 1.147a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L3.5 6.707V12.5zm3.5-9a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/></svg>
+        <span class="btn-text">Upload</span>
+      </button>
+      <button class="btn" id="btn-export" title="Export as .md">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+        <span class="btn-text">Export</span>
+      </button>
+      <button class="btn" id="btn-copy" title="Copy ASCII tree to clipboard">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+        <span class="btn-text">Copy</span>
+      </button>
+      <input type="file" id="file-upload" accept=".md,.json,.txt">
+    </div>
+  </header>
+
+  <div class="main" id="main-area">
+    <div class="tree-container" id="tree-container"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Type system ──
+  const TYPES = ['folder','thread','index','config','record','pipeline','capture','deliverable','asset','tooling'];
+
+  // ── Default tree data ──
+  const DEFAULT_TREE = [
+    { name: '~/Obsidian', desc: 'vault root', type: 'folder', children: [
+      { name: 'CLAUDE.md', desc: 'the brain \u2014 full personal context', type: 'config' },
+      { name: 'NOW.md', desc: 'active threads + momentum \u2014 Claude-maintained', type: 'index' },
+      { name: 'Backlog.md', desc: 'project pipeline \u2014 ideas \u2192 plans \u2192 active', type: 'index' },
+      { name: 'Elligint/', desc: 'area: elligint \u2014 day job', type: 'folder', children: [
+        { name: 'Alabama.md', desc: 'project overview + decisions', type: 'thread' },
+        { name: 'HELIOS.md', desc: 'product overview', type: 'thread' },
+        { name: 'AI Partnership Plan.md', desc: 'flow spec \u2014 April 1st RFP deadline', type: 'thread' },
+        { name: 'Resources/', desc: 'Elligint assets (moved from root)', type: 'folder' },
+      ]},
+      { name: 'Paul Rich/', desc: 'area: paul-rich \u2014 side business', type: 'folder', children: [
+        { name: 'Paul Rich.md', desc: 'area overview + decisions', type: 'thread' },
+        { name: 'Creator Collabs.md', desc: 'initiative overview', type: 'thread' },
+      ]},
+      { name: 'Foxrun/', desc: 'area: foxrun \u2014 platform/entity', type: 'folder', children: [
+        { name: 'MarcOS.md', desc: 'system overview', type: 'thread' },
+        { name: 'MarcOS - Architecture.md', desc: 'data model + infrastructure', type: 'thread' },
+        { name: 'MarcOS - Browser Automation.md', desc: 'automation project', type: 'thread' },
+        { name: 'MarcOS - Deck Engine.md', desc: 'presentation tooling', type: 'thread' },
+        { name: 'MarcOS - Foxrun Corp.md', desc: 'corporate entity', type: 'thread' },
+        { name: 'Strategy.md', desc: 'goals + building blocks', type: 'thread' },
+      ]},
+      { name: 'Personal/', desc: 'area: personal \u2014 life only', type: 'folder', children: [
+        { name: 'Golf.md', desc: '', type: 'record' },
+        { name: 'Wishlist.md', desc: '', type: 'record' },
+        { name: 'Finance.md', desc: '', type: 'record' },
+      ]},
+      { name: 'People/', desc: 'type: person \u2014 cross-area contacts', type: 'folder' },
+      { name: 'Meetings/', desc: 'type: meeting \u2014 cross-area', type: 'folder' },
+      { name: 'Decks/', desc: '.pptx deliverables', type: 'folder' },
+      { name: 'docs/', desc: 'work pipeline \u2014 inspired by CE', type: 'folder', children: [
+        { name: 'ideas/', desc: 'pre-backlog captures', type: 'pipeline' },
+        { name: 'plans/', desc: 'shaped backlog items', type: 'pipeline' },
+        { name: 'specs/', desc: 'implementation specs / PRDs', type: 'pipeline' },
+        { name: 'solutions/', desc: 'compounded learnings', type: 'pipeline' },
+      ]},
+      { name: 'Inbox/', desc: 'unsorted \u2014 dump everything here', type: 'capture' },
+      { name: 'Daily/', desc: 'daily notes', type: 'capture' },
+      { name: 'Archive/', desc: 'done / inactive / deprecated', type: 'folder' },
+      { name: 'Attachments/', desc: 'images, thumbnails, mermaid', type: 'asset' },
+      { name: 'Excalidraw/', desc: 'diagrams', type: 'asset' },
+      { name: 'System/', desc: 'vault operations', type: 'folder', children: [
+        { name: 'LOGS/', desc: 'daily capture \u2014 Claude-authored', type: 'folder' },
+        { name: 'SESSIONS/', desc: 'session summaries', type: 'folder' },
+        { name: 'Templates/', desc: 'Templater templates', type: 'folder' },
+        { name: 'Writing Styles/', desc: 'style guides', type: 'folder' },
+        { name: 'Scripts/', desc: 'utility scripts', type: 'folder' },
+        { name: '.credentials/', desc: 'OAuth tokens, SA keys', type: 'folder' },
+        { name: 'ARCHIVE/', desc: 'archived system files', type: 'folder' },
+        { name: 'EXPORTS/', desc: 'exported data', type: 'folder' },
+      ]},
+      { name: '.claude/', desc: 'Claude Code tooling', type: 'tooling', children: [
+        { name: 'rules/', desc: 'rule files', type: 'tooling' },
+        { name: 'skills/', desc: '45+ custom skills + gstack', type: 'tooling' },
+        { name: 'plugins/', desc: 'CE plugin, coding-tutor', type: 'tooling' },
+        { name: 'memory/', desc: 'auto-memory', type: 'tooling' },
+      ]},
+      { name: '.obsidian/', desc: 'Obsidian config', type: 'tooling' },
+      { name: '.git/', desc: 'version control', type: 'tooling' },
+      { name: '.gstack/', desc: 'gstack browser logs', type: 'tooling' },
+      { name: '.openclaw/', desc: 'OpenClaw workspace state', type: 'tooling' },
+      { name: '.clawhub/', desc: 'ClawHub lock', type: 'tooling' },
+      { name: '.vscode/', desc: 'VS Code settings', type: 'tooling' },
+    ]},
+    { name: '~/elligint', desc: 'enterprise workspace \u2014 outside vault', type: 'folder', children: [
+      { name: 'CLAUDE.md', desc: 'work-only context', type: 'config' },
+      { name: '.claude/', desc: 'enterprise auth via CLAUDE_CONFIG_DIR', type: 'tooling' },
+    ]},
+  ];
+
+  // ── State ──
+  let treeData = [];
+  let selectedId = null;
+  let editingId = null;
+  let nextId = 1;
+
+  // Assign IDs recursively
+  function assignIds(nodes) {
+    for (const node of nodes) {
+      node.id = nextId++;
+      if (!node.children) node.children = [];
+      assignIds(node.children);
+    }
+  }
+
+  // Deep clone tree
+  function cloneTree(nodes) {
+    return JSON.parse(JSON.stringify(nodes));
+  }
+
+  // ── Persistence ──
+  const STORAGE_KEY = 'marcos-tree-visualizer-v2';
+
+  function saveToStorage() {
+    try {
+      const data = {
+        tree: treeData,
+        fancy: document.getElementById('toggle-fancy').checked,
+        trailing: document.getElementById('toggle-trailing').checked,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) { /* storage full or disabled */ }
+  }
+
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ── Tree rendering helpers ──
+  function isFolder(node) {
+    return node.type === 'folder' || node.name.endsWith('/');
+  }
+
+  function displayName(node) {
+    const trailing = document.getElementById('toggle-trailing').checked;
+    let name = node.name;
+    if (trailing && isFolder(node) && !name.endsWith('/')) {
+      name += '/';
+    }
+    if (!trailing && name.endsWith('/')) {
+      name = name.slice(0, -1);
+    }
+    return name;
+  }
+
+  // Flatten tree into rows with metadata
+  function flattenTree(nodes, depth, parentPrefixes) {
+    const fancy = document.getElementById('toggle-fancy').checked;
+    const rows = [];
+
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const isLast = i === nodes.length - 1;
+
+      let prefix = '';
+      if (depth > 0) {
+        prefix = parentPrefixes;
+        if (fancy) {
+          prefix += isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
+        } else {
+          prefix += isLast ? '`-- ' : '|-- ';
+        }
+      }
+
+      rows.push({ node, prefix, depth });
+
+      if (node.children && node.children.length > 0) {
+        let childPrefix = parentPrefixes;
+        if (depth > 0) {
+          if (fancy) {
+            childPrefix += isLast ? '    ' : '\u2502   ';
+          } else {
+            childPrefix += isLast ? '    ' : '|   ';
+          }
+        }
+        const childRows = flattenTree(node.children, depth + 1, childPrefix);
+        rows.push(...childRows);
+      }
+    }
+
+    return rows;
+  }
+
+  // Compute column positions for alignment
+  function computeColumns(rows) {
+    let maxNameCol = 0;
+    let maxDescCol = 0;
+
+    for (const row of rows) {
+      const nameLen = row.prefix.length + displayName(row.node).length;
+      if (nameLen > maxNameCol) maxNameCol = nameLen;
+    }
+
+    // Description starts 8 chars after longest name
+    const descStart = maxNameCol + 8;
+
+    for (const row of rows) {
+      const desc = row.node.desc || '';
+      const descLen = desc.length;
+      if (descLen > maxDescCol) maxDescCol = descLen;
+    }
+
+    // Type badge starts 4 chars after longest description
+    const typeStart = descStart + maxDescCol + 4;
+
+    return { descStart, typeStart };
+  }
+
+  // ── Render tree ──
+  function render() {
+    const container = document.getElementById('tree-container');
+    const rows = flattenTree(treeData, 0, '');
+    const cols = computeColumns(rows);
+
+    container.innerHTML = '';
+
+    for (const row of rows) {
+      if (editingId === row.node.id) {
+        container.appendChild(createEditRow(row, cols));
+      } else {
+        container.appendChild(createViewRow(row, cols));
+      }
+    }
+
+    saveToStorage();
+  }
+
+  function createViewRow(row, cols) {
+    const div = document.createElement('div');
+    div.className = 'tree-row' + (selectedId === row.node.id ? ' selected' : '');
+    div.dataset.id = row.node.id;
+
+    // Prefix (tree chars)
+    const prefixSpan = document.createElement('span');
+    prefixSpan.className = 'tree-prefix';
+    prefixSpan.textContent = row.prefix;
+    div.appendChild(prefixSpan);
+
+    // Name
+    const name = displayName(row.node);
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'tree-name' + (isFolder(row.node) ? ' is-folder' : '');
+    nameSpan.textContent = name;
+    div.appendChild(nameSpan);
+
+    // Pad between name and description
+    const nameLen = row.prefix.length + name.length;
+    const descPad = Math.max(cols.descStart - nameLen, 4);
+
+    // Description
+    const desc = row.node.desc || '';
+    if (desc) {
+      const descSpan = document.createElement('span');
+      descSpan.className = 'tree-description';
+      descSpan.textContent = ' '.repeat(descPad) + desc;
+      div.appendChild(descSpan);
+
+      // Pad between description and type
+      const descLen = cols.descStart + desc.length;
+      const typePad = Math.max(cols.typeStart - descLen, 3);
+      const padSpan = document.createElement('span');
+      padSpan.style.whiteSpace = 'pre';
+      padSpan.textContent = ' '.repeat(typePad);
+      div.appendChild(padSpan);
+    } else {
+      // No description — pad from name to type column
+      const typePad = Math.max(cols.typeStart - nameLen, 3);
+      const padSpan = document.createElement('span');
+      padSpan.style.whiteSpace = 'pre';
+      padSpan.textContent = ' '.repeat(typePad);
+      div.appendChild(padSpan);
+    }
+
+    // Type badge
+    if (row.node.type) {
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'tree-type';
+      typeSpan.dataset.type = row.node.type;
+      typeSpan.textContent = row.node.type;
+      div.appendChild(typeSpan);
+    }
+
+    // Inline toolbar
+    const toolbar = document.createElement('span');
+    toolbar.className = 'node-toolbar';
+    toolbar.innerHTML = `
+      <button class="tb tb-label" data-action="child" title="Add child">+ Child</button>
+      <button class="tb tb-label" data-action="sibling" title="Add sibling">+ Sibling</button>
+      <button class="tb" data-action="indent" title="Indent (make child of above)">\u2192</button>
+      <button class="tb" data-action="unindent" title="Unindent (promote to parent)">\u2190</button>
+      <button class="tb" data-action="move-up" title="Move up">\u2191</button>
+      <button class="tb" data-action="move-down" title="Move down">\u2193</button>
+      <button class="tb tb-label" data-action="edit" title="Edit node">Edit</button>
+      <button class="tb tb-delete" data-action="delete" title="Delete node">\u2715</button>
+    `;
+    div.appendChild(toolbar);
+
+    // Click to select
+    div.addEventListener('click', (e) => {
+      if (e.target.closest('.node-toolbar')) return;
+      selectedId = (selectedId === row.node.id) ? null : row.node.id;
+      render();
+    });
+
+    // Toolbar actions
+    toolbar.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      e.stopPropagation();
+      handleAction(btn.dataset.action, row.node.id);
+    });
+
+    return div;
+  }
+
+  function createEditRow(row, cols) {
+    const div = document.createElement('div');
+    div.className = 'edit-row';
+    div.dataset.id = row.node.id;
+
+    // Prefix
+    const prefixSpan = document.createElement('span');
+    prefixSpan.className = 'tree-prefix';
+    prefixSpan.textContent = row.prefix;
+    div.appendChild(prefixSpan);
+
+    // Name input
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'edit-input name-input';
+    nameInput.value = row.node.name;
+    nameInput.placeholder = 'name';
+    div.appendChild(nameInput);
+
+    // Hash separator
+    const hash = document.createElement('span');
+    hash.style.color = 'var(--text-muted)';
+    hash.style.padding = '0 4px';
+    hash.textContent = '#';
+    div.appendChild(hash);
+
+    // Description input
+    const descInput = document.createElement('input');
+    descInput.type = 'text';
+    descInput.className = 'edit-input desc-input';
+    descInput.value = row.node.desc || '';
+    descInput.placeholder = 'description';
+    div.appendChild(descInput);
+
+    // Type select
+    const typeSelect = document.createElement('select');
+    typeSelect.className = 'edit-select';
+    for (const t of TYPES) {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      if (t === row.node.type) opt.selected = true;
+      typeSelect.appendChild(opt);
+    }
+    div.appendChild(typeSelect);
+
+    // Action buttons
+    const actions = document.createElement('span');
+    actions.className = 'edit-actions';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'edit-btn confirm';
+    confirmBtn.title = 'Confirm (Enter)';
+    confirmBtn.textContent = '\u2713';
+    confirmBtn.addEventListener('click', () => commitEdit(row.node.id, nameInput.value, descInput.value, typeSelect.value));
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'edit-btn cancel';
+    cancelBtn.title = 'Cancel (Esc)';
+    cancelBtn.textContent = '\u2715';
+    cancelBtn.addEventListener('click', () => cancelEdit());
+
+    actions.appendChild(confirmBtn);
+    actions.appendChild(cancelBtn);
+    div.appendChild(actions);
+
+    // Keyboard handlers
+    function handleKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitEdit(row.node.id, nameInput.value, descInput.value, typeSelect.value);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelEdit();
+      }
+    }
+
+    nameInput.addEventListener('keydown', handleKey);
+    descInput.addEventListener('keydown', handleKey);
+    typeSelect.addEventListener('keydown', handleKey);
+
+    // Auto-focus name input after render
+    requestAnimationFrame(() => nameInput.focus());
+
+    return div;
+  }
+
+  // ── Tree operations ──
+
+  // Find node and its parent array
+  function findNode(id, nodes, parent) {
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === id) {
+        return { node: nodes[i], siblings: nodes, index: i, parent };
+      }
+      if (nodes[i].children && nodes[i].children.length > 0) {
+        const found = findNode(id, nodes[i].children, nodes[i]);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function newNode() {
+    return { id: nextId++, name: 'New Item', desc: '', type: 'folder', children: [] };
+  }
+
+  function handleAction(action, nodeId) {
+    const found = findNode(nodeId, treeData, null);
+    if (!found) return;
+
+    const { node, siblings, index, parent } = found;
+
+    switch (action) {
+      case 'child': {
+        const child = newNode();
+        if (!node.children) node.children = [];
+        node.children.push(child);
+        selectedId = child.id;
+        editingId = child.id;
+        render();
+        break;
+      }
+      case 'sibling': {
+        const sib = newNode();
+        siblings.splice(index + 1, 0, sib);
+        selectedId = sib.id;
+        editingId = sib.id;
+        render();
+        break;
+      }
+      case 'indent': {
+        // Make child of previous sibling
+        if (index === 0) return;
+        const prevSibling = siblings[index - 1];
+        if (!prevSibling.children) prevSibling.children = [];
+        siblings.splice(index, 1);
+        prevSibling.children.push(node);
+        render();
+        break;
+      }
+      case 'unindent': {
+        // Promote to parent level
+        if (!parent) return;
+        const parentFound = findNode(parent.id, treeData, null);
+        if (!parentFound) return;
+        const parentIndex = parentFound.index;
+        // Remove from current siblings
+        siblings.splice(index, 1);
+        // Insert after parent in parent's siblings
+        parentFound.siblings.splice(parentIndex + 1, 0, node);
+        render();
+        break;
+      }
+      case 'move-up': {
+        if (index === 0) return;
+        siblings.splice(index, 1);
+        siblings.splice(index - 1, 0, node);
+        render();
+        break;
+      }
+      case 'move-down': {
+        if (index >= siblings.length - 1) return;
+        siblings.splice(index, 1);
+        siblings.splice(index + 1, 0, node);
+        render();
+        break;
+      }
+      case 'edit': {
+        editingId = nodeId;
+        render();
+        break;
+      }
+      case 'delete': {
+        siblings.splice(index, 1);
+        if (selectedId === nodeId) selectedId = null;
+        render();
+        showToast('Deleted');
+        break;
+      }
+    }
+  }
+
+  function commitEdit(nodeId, name, desc, type) {
+    const found = findNode(nodeId, treeData, null);
+    if (!found) return;
+    const trimName = name.trim();
+    if (!trimName) {
+      // If name is empty on a brand new node, just delete it
+      if (found.node.name === 'New Item') {
+        found.siblings.splice(found.index, 1);
+        if (selectedId === nodeId) selectedId = null;
+      }
+      editingId = null;
+      render();
+      return;
+    }
+    found.node.name = trimName;
+    found.node.desc = desc.trim();
+    found.node.type = type;
+    editingId = null;
+    render();
+  }
+
+  function cancelEdit() {
+    // If the node is brand new (still "New Item"), remove it
+    if (editingId) {
+      const found = findNode(editingId, treeData, null);
+      if (found && found.node.name === 'New Item') {
+        found.siblings.splice(found.index, 1);
+        if (selectedId === editingId) selectedId = null;
+      }
+    }
+    editingId = null;
+    render();
+  }
+
+  // ── Export / Copy ──
+
+  function treeToMd(nodes, indent) {
+    const trailing = document.getElementById('toggle-trailing').checked;
+    let out = '';
+    for (const node of nodes) {
+      let name = node.name;
+      if (trailing && isFolder(node) && !name.endsWith('/')) name += '/';
+      if (!trailing && name.endsWith('/')) name = name.slice(0, -1);
+
+      let line = indent + name;
+      if (node.desc) line += ' # ' + node.desc;
+      if (node.type) line += ' [' + node.type + ']';
+      out += line + '\n';
+
+      if (node.children && node.children.length > 0) {
+        out += treeToMd(node.children, indent + '    ');
+      }
+    }
+    return out;
+  }
+
+  function treeToAscii(nodes, depth, parentPrefixes) {
+    const fancy = document.getElementById('toggle-fancy').checked;
+    const trailing = document.getElementById('toggle-trailing').checked;
+    let out = '';
+
+    // Compute max name length for alignment in this tree
+    const allRows = flattenTree(nodes, depth, parentPrefixes);
+    const cols = computeColumns(flattenTree(treeData, 0, ''));
+
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const isLast = i === nodes.length - 1;
+
+      let prefix = '';
+      if (depth > 0) {
+        prefix = parentPrefixes;
+        if (fancy) {
+          prefix += isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
+        } else {
+          prefix += isLast ? '`-- ' : '|-- ';
+        }
+      }
+
+      let name = node.name;
+      if (trailing && isFolder(node) && !name.endsWith('/')) name += '/';
+      if (!trailing && name.endsWith('/')) name = name.slice(0, -1);
+
+      let line = prefix + name;
+
+      // Add description with alignment
+      const nameLen = prefix.length + name.length;
+      const desc = node.desc || '';
+      if (desc) {
+        const descPad = Math.max(cols.descStart - nameLen, 4);
+        line += ' '.repeat(descPad) + '# ' + desc;
+      }
+
+      // Add type
+      if (node.type) {
+        if (!desc) {
+          const typePad = Math.max(cols.descStart - nameLen, 4);
+          line += ' '.repeat(typePad);
+        } else {
+          line += '  ';
+        }
+        line += '[' + node.type + ']';
+      }
+
+      out += line + '\n';
+
+      if (node.children && node.children.length > 0) {
+        let childPrefix = parentPrefixes;
+        if (depth > 0) {
+          if (fancy) {
+            childPrefix += isLast ? '    ' : '\u2502   ';
+          } else {
+            childPrefix += isLast ? '    ' : '|   ';
+          }
+        }
+        out += treeToAscii(node.children, depth + 1, childPrefix);
+      }
+    }
+
+    return out;
+  }
+
+  // ── Import / Parse ──
+
+  function parseMdTree(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    const root = [];
+    const stack = [{ indent: -1, children: root }];
+
+    for (const line of lines) {
+      const match = line.match(/^(\s*)/);
+      const indent = match ? match[1].length : 0;
+      const content = line.trim();
+
+      // Parse: name # description [type]
+      let name = content;
+      let desc = '';
+      let type = 'folder';
+
+      // Extract [type] at end
+      const typeMatch = name.match(/\s*\[(\w+)\]\s*$/);
+      if (typeMatch) {
+        type = typeMatch[1];
+        name = name.slice(0, typeMatch.index).trim();
+      }
+
+      // Extract # description
+      const hashMatch = name.match(/\s+#\s+(.+)$/);
+      if (hashMatch) {
+        desc = hashMatch[1].trim();
+        name = name.slice(0, hashMatch.index).trim();
+      }
+
+      // Strip tree-drawing chars
+      name = name.replace(/^[\u2502\u251C\u2514\u2500`|\-\s]+/, '').trim();
+
+      if (!name) continue;
+
+      const node = { id: nextId++, name, desc, type, children: [] };
+
+      // Find parent based on indent
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+
+      stack[stack.length - 1].children.push(node);
+      stack.push({ indent, children: node.children });
+    }
+
+    return root;
+  }
+
+  function parseJsonTree(json) {
+    function convert(obj) {
+      const node = {
+        id: nextId++,
+        name: obj.name || 'Untitled',
+        desc: obj.description || obj.desc || '',
+        type: obj.type || 'folder',
+        children: [],
+      };
+      if (obj.children && Array.isArray(obj.children)) {
+        node.children = obj.children.map(convert);
+      }
+      return node;
+    }
+
+    if (Array.isArray(json)) {
+      return json.map(convert);
+    }
+    return [convert(json)];
+  }
+
+  function parseTxtTree(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    const root = [];
+    const stack = [{ indent: -1, children: root }];
+
+    for (const line of lines) {
+      const match = line.match(/^(\s*)/);
+      const indent = match ? match[1].length : 0;
+      let name = line.trim();
+
+      // Strip tree chars
+      name = name.replace(/^[\u2502\u251C\u2514\u2500`|\-\s]+/, '').trim();
+      if (!name) continue;
+
+      // Guess type from name
+      let type = 'folder';
+      if (name.endsWith('/')) type = 'folder';
+      else if (name.includes('.')) type = 'thread';
+
+      const node = { id: nextId++, name, desc: '', type, children: [] };
+
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+
+      stack[stack.length - 1].children.push(node);
+      stack.push({ indent, children: node.children });
+    }
+
+    return root;
+  }
+
+  // ── Mobile preview ──
+
+  function toggleMobilePreview(on) {
+    const main = document.getElementById('main-area');
+    const container = document.getElementById('tree-container');
+
+    if (on) {
+      // Wrap tree in mobile frame
+      let frame = document.getElementById('mobile-frame');
+      if (!frame) {
+        frame = document.createElement('div');
+        frame.className = 'mobile-frame';
+        frame.id = 'mobile-frame';
+        const inner = document.createElement('div');
+        inner.className = 'mobile-inner';
+        frame.appendChild(inner);
+      }
+      frame.querySelector('.mobile-inner').appendChild(container);
+      main.innerHTML = '';
+      main.appendChild(frame);
+    } else {
+      // Unwrap
+      const frame = document.getElementById('mobile-frame');
+      if (frame) {
+        main.innerHTML = '';
+        main.appendChild(container);
+      }
+    }
+  }
+
+  // ── Keyboard shortcuts ──
+
+  document.addEventListener('keydown', (e) => {
+    if (editingId) return; // Don't interfere with editing
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (selectedId && !editingId) {
+        e.preventDefault();
+        handleAction('delete', selectedId);
+      }
+    }
+
+    if (e.key === 'e' && selectedId && !editingId) {
+      e.preventDefault();
+      handleAction('edit', selectedId);
+    }
+
+    if (e.key === 'ArrowUp' && !e.shiftKey && selectedId) {
+      e.preventDefault();
+      navigateSelection(-1);
+    }
+
+    if (e.key === 'ArrowDown' && !e.shiftKey && selectedId) {
+      e.preventDefault();
+      navigateSelection(1);
+    }
+
+    if (e.shiftKey && e.key === 'ArrowUp' && selectedId) {
+      e.preventDefault();
+      handleAction('move-up', selectedId);
+    }
+
+    if (e.shiftKey && e.key === 'ArrowDown' && selectedId) {
+      e.preventDefault();
+      handleAction('move-down', selectedId);
+    }
+
+    if (e.key === 'Tab' && selectedId && !editingId) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        handleAction('unindent', selectedId);
+      } else {
+        handleAction('indent', selectedId);
+      }
+    }
+
+    if (e.key === 'Enter' && selectedId && !editingId) {
+      e.preventDefault();
+      handleAction('sibling', selectedId);
+    }
+  });
+
+  function navigateSelection(direction) {
+    const rows = flattenTree(treeData, 0, '');
+    const idx = rows.findIndex(r => r.node.id === selectedId);
+    if (idx < 0) return;
+    const newIdx = idx + direction;
+    if (newIdx >= 0 && newIdx < rows.length) {
+      selectedId = rows[newIdx].node.id;
+      render();
+      // Scroll into view
+      const el = document.querySelector(`[data-id="${selectedId}"]`);
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  // ── Event bindings ──
+
+  document.getElementById('btn-upload').addEventListener('click', () => {
+    document.getElementById('file-upload').click();
+  });
+
+  document.getElementById('file-upload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      nextId = 1;
+      try {
+        if (ext === 'json') {
+          const json = JSON.parse(text);
+          treeData = parseJsonTree(json);
+        } else if (ext === 'md') {
+          treeData = parseMdTree(text);
+        } else {
+          treeData = parseTxtTree(text);
+        }
+        selectedId = null;
+        editingId = null;
+        render();
+        showToast('Loaded ' + file.name);
+      } catch (err) {
+        showToast('Parse error: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-export').addEventListener('click', () => {
+    const md = treeToMd(treeData, '');
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tree.md';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Exported tree.md');
+  });
+
+  document.getElementById('btn-copy').addEventListener('click', () => {
+    const ascii = treeToAscii(treeData, 0, '');
+    navigator.clipboard.writeText(ascii).then(() => {
+      showToast('Copied to clipboard');
+    }).catch(() => {
+      showToast('Copy failed');
+    });
+  });
+
+  document.getElementById('toggle-fancy').addEventListener('change', () => render());
+  document.getElementById('toggle-trailing').addEventListener('change', () => render());
+  document.getElementById('toggle-mobile').addEventListener('change', (e) => {
+    toggleMobilePreview(e.target.checked);
+    render();
+  });
+
+  // ── Click outside to deselect ──
+  document.getElementById('main-area').addEventListener('click', (e) => {
+    if (!e.target.closest('.tree-row') && !e.target.closest('.edit-row')) {
+      if (!editingId) {
+        selectedId = null;
+        render();
+      }
+    }
+  });
+
+  // ── Init ──
+  const saved = loadFromStorage();
+  if (saved && saved.tree && saved.tree.length > 0) {
+    treeData = saved.tree;
+    // Re-assign IDs to ensure nextId is correct
+    nextId = 1;
+    assignIds(treeData);
+    if (typeof saved.fancy === 'boolean') document.getElementById('toggle-fancy').checked = saved.fancy;
+    if (typeof saved.trailing === 'boolean') document.getElementById('toggle-trailing').checked = saved.trailing;
+  } else {
+    treeData = cloneTree(DEFAULT_TREE);
+    nextId = 1;
+    assignIds(treeData);
+  }
+
+  render();
+
+})();
+</script>
+</body>
+</html>
