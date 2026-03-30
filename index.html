@@ -6,7 +6,7 @@
 <title>MarcOS Tree Visualizer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,11 +24,12 @@
     --success: #3fb950;
     --danger: #f85149;
     --warning: #d29922;
-    --font-mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
+    --font-sans: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
     --radius: 6px;
     --transition: 150ms ease;
-    --row-height: 24px;
+    --row-height: 22px;
+    --icon-slot-width: 20px;
     --type-folder: #58a6ff;
     --type-thread: #3fb950;
     --type-index: #d29922;
@@ -46,8 +47,8 @@
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.3;
+    font-size: 12px;
+    line-height: 1.2;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
   }
@@ -64,7 +65,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 16px;
+    padding: 6px 16px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
@@ -79,7 +80,7 @@
   }
 
   .logo {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     font-family: var(--font-sans);
     color: var(--text);
@@ -117,7 +118,7 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 4px 10px;
+    padding: 3px 10px;
     font-size: 11px;
     font-family: var(--font-sans);
     font-weight: 500;
@@ -149,8 +150,8 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 10px;
-    font-size: 12px;
+    padding: 3px 10px;
+    font-size: 11px;
     font-family: var(--font-sans);
     font-weight: 500;
     color: var(--text);
@@ -207,7 +208,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 12px;
+    font-size: 11px;
     font-family: var(--font-sans);
     color: var(--text-muted);
     cursor: pointer;
@@ -276,11 +277,11 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(80px);
-    padding: 8px 18px;
+    padding: 6px 16px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    font-size: 12px;
+    font-size: 11px;
     font-family: var(--font-sans);
     color: var(--text);
     z-index: 9999;
@@ -298,15 +299,15 @@
   .main {
     flex: 1;
     overflow: auto;
-    padding: 8px 16px 60px;
+    padding: 4px 16px 60px;
     -webkit-overflow-scrolling: touch;
   }
 
   /* -- Tree -- */
   .tree-container {
-    font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.2;
     min-width: fit-content;
   }
 
@@ -314,7 +315,7 @@
     display: flex;
     align-items: center;
     height: var(--row-height);
-    padding: 2px 8px;
+    padding: 1px 8px;
     border-radius: 3px;
     cursor: pointer;
     transition: background var(--transition);
@@ -330,38 +331,66 @@
     background: rgba(88, 166, 255, 0.1);
   }
 
-  .tree-row.drop-target {
+  .tree-row.drop-above {
+    box-shadow: inset 0 2px 0 0 var(--accent);
+  }
+
+  .tree-row.drop-below {
+    box-shadow: inset 0 -2px 0 0 var(--accent);
+  }
+
+  .tree-row.drop-into {
     background: rgba(88, 166, 255, 0.15);
     outline: 1px dashed var(--accent);
   }
 
-  .tree-toggle {
+  .tree-row.dragging {
+    opacity: 0.4;
+  }
+
+  /* -- Icon slots (left of tree chars) -- */
+  .icon-slots {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: calc(var(--icon-slot-width) * 3);
+    gap: 0;
+  }
+
+  .icon-slot {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
+    width: var(--icon-slot-width);
     height: 16px;
-    font-size: 9px;
-    color: var(--text-muted);
-    cursor: pointer;
     flex-shrink: 0;
-    user-select: none;
     border: none;
     background: none;
     padding: 0;
+    cursor: pointer;
+    color: var(--text-muted);
     border-radius: 3px;
     transition: color var(--transition), background var(--transition);
+    user-select: none;
   }
 
-  .tree-toggle:hover {
+  .icon-slot:hover {
     color: var(--text);
     background: var(--btn-hover);
   }
 
-  .tree-toggle-placeholder {
-    display: inline-block;
+  .icon-slot svg {
     width: 16px;
-    flex-shrink: 0;
+    height: 16px;
+    display: block;
+  }
+
+  .icon-slot.drag-handle {
+    cursor: grab;
+  }
+
+  .icon-slot.drag-handle:active {
+    cursor: grabbing;
   }
 
   .tree-prefix {
@@ -444,9 +473,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 22px;
-    font-size: 12px;
+    width: 22px;
+    height: 20px;
+    font-size: 11px;
     font-family: var(--font-sans);
     color: var(--text-muted);
     background: transparent;
@@ -472,7 +501,7 @@
   .tb-label {
     width: auto;
     padding: 0 6px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
   }
 
@@ -482,7 +511,7 @@
     align-items: center;
     gap: 6px;
     height: var(--row-height);
-    padding: 2px 8px;
+    padding: 1px 8px;
     white-space: nowrap;
   }
 
@@ -496,10 +525,10 @@
     border-radius: 3px;
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 13px;
-    padding: 2px 6px;
+    font-size: 12px;
+    padding: 1px 6px;
     outline: none;
-    height: 22px;
+    height: 20px;
   }
 
   .edit-input:focus {
@@ -516,10 +545,10 @@
     border-radius: 3px;
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 11px;
-    padding: 2px 4px;
+    font-size: 10px;
+    padding: 1px 4px;
     outline: none;
-    height: 22px;
+    height: 20px;
     cursor: pointer;
   }
 
@@ -537,9 +566,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    font-size: 13px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: 3px;
@@ -812,7 +841,7 @@
 
   /* -- Mobile tree row -- */
   .mobile-view .tree-container {
-    font-size: 14px;
+    font-size: 12px;
     min-width: unset;
     width: 100%;
   }
@@ -885,6 +914,23 @@
     background: #000;
     border-radius: 12px;
     z-index: 10;
+  }
+
+  /* -- Drag ghost -- */
+  .drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.85;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 
   /* -- Responsive -- */
@@ -1035,6 +1081,12 @@
 (function() {
   'use strict';
 
+  // -- SVG icons (inline) --
+  const ICON_COLLAPSE = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 4l4 4-4 4z"/></svg>';
+  const ICON_EXPAND = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4z"/></svg>';
+  const ICON_EDIT = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-9.146 9.146H3v-3l9.146-9.146zM11.207 3L5 9.207V11h1.793L13 4.793 11.207 3z"/></svg>';
+  const ICON_DRAG = '<svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="3" r="1.2"/><circle cx="10.5" cy="3" r="1.2"/><circle cx="5.5" cy="8" r="1.2"/><circle cx="10.5" cy="8" r="1.2"/><circle cx="5.5" cy="13" r="1.2"/><circle cx="10.5" cy="13" r="1.2"/></svg>';
+
   // -- Type system --
   const TYPES = ['folder','thread','index','config','record','pipeline','capture','deliverable','asset','tooling'];
 
@@ -1118,6 +1170,10 @@
   let viewMode = 'auto'; // 'auto' | 'desktop' | 'mobile'
   let collapsedNodes = new Set(); // Set of node IDs that are collapsed
 
+  // -- Drag state --
+  let dragState = null; // { nodeId, ghostEl, startY, startX }
+  let dropTarget = null; // { nodeId, position: 'above' | 'below' | 'into' }
+
   // Assign IDs recursively
   function assignIds(nodes) {
     for (const node of nodes) {
@@ -1145,6 +1201,20 @@
   // Check if a node has children
   function hasChildren(node) {
     return node.children && node.children.length > 0;
+  }
+
+  // Check if nodeId is a descendant of ancestorId
+  function isDescendant(nodeId, ancestorId, nodes) {
+    const found = findNode(ancestorId, nodes, null);
+    if (!found) return false;
+    function walk(children) {
+      for (const c of children) {
+        if (c.id === nodeId) return true;
+        if (c.children && walk(c.children)) return true;
+      }
+      return false;
+    }
+    return walk(found.node.children || []);
   }
 
   // Collapse/expand all nodes
@@ -1272,7 +1342,7 @@
   }
 
   // Flatten tree into rows with metadata (respects collapsed state)
-  function flattenTree(nodes, depth, parentPrefixes) {
+  function flattenTree(nodes, depth, parentPrefixes, parentIsLastStack) {
     const fancy = document.getElementById('toggle-fancy').checked;
     const rows = [];
 
@@ -1280,34 +1350,45 @@
       const node = nodes[i];
       const isLast = i === nodes.length - 1;
 
+      // Build the prefix string from the parentIsLastStack
       let prefix = '';
       if (depth > 0) {
+        // First, draw the continuation lines from ancestors
         prefix = parentPrefixes;
+        // Then draw our own connector
         if (fancy) {
-          prefix += isLast ? '\u2514\u2500 ' : '\u251C\u2500 ';
+          prefix += isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
         } else {
-          prefix += isLast ? '`- ' : '|- ';
+          prefix += isLast ? '`-- ' : '|-- ';
         }
       }
 
-      rows.push({ node, prefix, depth });
+      rows.push({ node, prefix, depth, isLast });
 
       // Only render children if not collapsed
       if (hasChildren(node) && !collapsedNodes.has(node.id)) {
-        let childPrefix = parentPrefixes;
+        let childParentPrefixes = parentPrefixes;
         if (depth > 0) {
+          // If this node is the last child, no continuation pipe needed
+          // If not last, draw a continuation pipe
           if (fancy) {
-            childPrefix += isLast ? '   ' : '\u2502  ';
+            childParentPrefixes += isLast ? '    ' : '\u2502   ';
           } else {
-            childPrefix += isLast ? '   ' : '|  ';
+            childParentPrefixes += isLast ? '    ' : '|   ';
           }
         }
-        const childRows = flattenTree(node.children, depth + 1, childPrefix);
+        const childRows = flattenTree(node.children, depth + 1, childParentPrefixes);
         rows.push(...childRows);
       }
     }
 
     return rows;
+  }
+
+  // Build a flat list of visible row node IDs (for drag target computation)
+  function getVisibleRowIds() {
+    const rows = flattenTree(treeData, 0, '');
+    return rows.map(r => r.node.id);
   }
 
   // -- Render tree --
@@ -1347,20 +1428,24 @@
   }
 
   // -- Unified view row (same layout for desktop and mobile) --
-  // Layout: [toggle] [prefix] [name] [description (ellipsis)] [type pill] [toolbar]
+  // Layout: [icon-slots: collapse | edit | drag] [prefix] [name] [description (ellipsis)] [type pill] [toolbar]
   function createViewRow(row, isEditing) {
     const div = document.createElement('div');
     div.className = 'tree-row' + (selectedId === row.node.id && !isEditing ? ' selected' : '');
     div.dataset.id = row.node.id;
 
-    // Collapse/expand toggle
+    // Icon slots container (3 slots, fixed width)
+    const iconSlots = document.createElement('span');
+    iconSlots.className = 'icon-slots';
+
+    // Slot 1: Collapse/expand (only if has children)
     if (hasChildren(row.node)) {
-      const toggle = document.createElement('button');
-      toggle.className = 'tree-toggle';
+      const collapseBtn = document.createElement('button');
+      collapseBtn.className = 'icon-slot';
       const isCollapsed = collapsedNodes.has(row.node.id);
-      toggle.textContent = isCollapsed ? '\u25B6' : '\u25BC';
-      toggle.title = isCollapsed ? 'Expand' : 'Collapse';
-      toggle.addEventListener('click', (e) => {
+      collapseBtn.innerHTML = isCollapsed ? ICON_COLLAPSE : ICON_EXPAND;
+      collapseBtn.title = isCollapsed ? 'Expand' : 'Collapse';
+      collapseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (collapsedNodes.has(row.node.id)) {
           collapsedNodes.delete(row.node.id);
@@ -1370,12 +1455,39 @@
         render();
         saveToStorage();
       });
-      div.appendChild(toggle);
-    } else {
-      const placeholder = document.createElement('span');
-      placeholder.className = 'tree-toggle-placeholder';
-      div.appendChild(placeholder);
+      iconSlots.appendChild(collapseBtn);
     }
+
+    // Slot 2: Edit (pencil)
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-slot';
+    editBtn.innerHTML = ICON_EDIT;
+    editBtn.title = 'Edit';
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleAction('edit', row.node.id);
+    });
+    iconSlots.appendChild(editBtn);
+
+    // Slot 3: Drag handle
+    const dragBtn = document.createElement('button');
+    dragBtn.className = 'icon-slot drag-handle';
+    dragBtn.innerHTML = ICON_DRAG;
+    dragBtn.title = 'Drag to reorder';
+    dragBtn.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      startDrag(e, row.node.id);
+    });
+    dragBtn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      if (e.touches.length === 1) {
+        startDrag(e.touches[0], row.node.id);
+      }
+    }, { passive: false });
+    iconSlots.appendChild(dragBtn);
+
+    div.appendChild(iconSlots);
 
     const prefixSpan = document.createElement('span');
     prefixSpan.className = 'tree-prefix';
@@ -1423,7 +1535,6 @@
       <button class="tb" data-action="unindent" title="Unindent (promote to parent)">\u2190</button>
       <button class="tb" data-action="move-up" title="Move up">\u2191</button>
       <button class="tb" data-action="move-down" title="Move down">\u2193</button>
-      <button class="tb tb-label" data-action="edit" title="Edit node">Edit</button>
       <button class="tb tb-delete" data-action="delete" title="Delete node">\u2715</button>
     `;
     div.appendChild(toolbar);
@@ -1431,7 +1542,7 @@
     if (!isEditing) {
       div.addEventListener('click', (e) => {
         if (e.target.closest('.node-toolbar')) return;
-        if (e.target.closest('.tree-toggle')) return;
+        if (e.target.closest('.icon-slot')) return;
         if (isMobileActive()) {
           selectedId = (selectedId === row.node.id) ? null : row.node.id;
           editingId = null;
@@ -1450,6 +1561,157 @@
     });
 
     return div;
+  }
+
+  // -- Drag and Drop system --
+
+  function startDrag(e, nodeId) {
+    const found = findNode(nodeId, treeData, null);
+    if (!found) return;
+
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    ghost.textContent = displayName(found.node);
+    document.body.appendChild(ghost);
+
+    dragState = {
+      nodeId,
+      ghostEl: ghost,
+      startX: e.clientX || e.pageX,
+      startY: e.clientY || e.pageY,
+    };
+
+    ghost.style.left = (dragState.startX + 12) + 'px';
+    ghost.style.top = (dragState.startY - 10) + 'px';
+
+    // Mark the source row
+    const srcRow = document.querySelector(`[data-id="${nodeId}"]`);
+    if (srcRow) srcRow.classList.add('dragging');
+
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+    document.addEventListener('touchmove', onDragMoveTouch, { passive: false });
+    document.addEventListener('touchend', onDragEndTouch);
+  }
+
+  function onDragMove(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    updateDragPosition(e.clientX, e.clientY);
+  }
+
+  function onDragMoveTouch(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      updateDragPosition(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }
+
+  function updateDragPosition(x, y) {
+    if (!dragState) return;
+
+    dragState.ghostEl.style.left = (x + 12) + 'px';
+    dragState.ghostEl.style.top = (y - 10) + 'px';
+
+    // Clear old drop indicators
+    document.querySelectorAll('.drop-above, .drop-below, .drop-into').forEach(el => {
+      el.classList.remove('drop-above', 'drop-below', 'drop-into');
+    });
+
+    // Find the row under the cursor
+    const rows = document.querySelectorAll('.tree-row');
+    dropTarget = null;
+
+    for (const row of rows) {
+      const rowId = parseInt(row.dataset.id);
+      if (rowId === dragState.nodeId) continue;
+      // Don't allow dropping into own descendants
+      if (isDescendant(rowId, dragState.nodeId, treeData)) continue;
+
+      const rect = row.getBoundingClientRect();
+      if (y >= rect.top && y <= rect.bottom) {
+        const relY = y - rect.top;
+        const height = rect.height;
+
+        if (relY < height * 0.25) {
+          dropTarget = { nodeId: rowId, position: 'above' };
+          row.classList.add('drop-above');
+        } else if (relY > height * 0.75) {
+          dropTarget = { nodeId: rowId, position: 'below' };
+          row.classList.add('drop-below');
+        } else {
+          dropTarget = { nodeId: rowId, position: 'into' };
+          row.classList.add('drop-into');
+        }
+        break;
+      }
+    }
+  }
+
+  function onDragEnd(e) {
+    finishDrag();
+  }
+
+  function onDragEndTouch(e) {
+    finishDrag();
+  }
+
+  function finishDrag() {
+    if (!dragState) return;
+
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+    document.removeEventListener('touchmove', onDragMoveTouch);
+    document.removeEventListener('touchend', onDragEndTouch);
+
+    // Remove ghost
+    if (dragState.ghostEl && dragState.ghostEl.parentNode) {
+      dragState.ghostEl.parentNode.removeChild(dragState.ghostEl);
+    }
+
+    // Clear indicators
+    document.querySelectorAll('.dragging, .drop-above, .drop-below, .drop-into').forEach(el => {
+      el.classList.remove('dragging', 'drop-above', 'drop-below', 'drop-into');
+    });
+
+    // Perform the drop
+    if (dropTarget) {
+      performDrop(dragState.nodeId, dropTarget);
+    }
+
+    dragState = null;
+    dropTarget = null;
+  }
+
+  function performDrop(sourceId, target) {
+    // Remove the source node from its current position
+    const sourcePosn = findNode(sourceId, treeData, null);
+    if (!sourcePosn) return;
+    const sourceNode = sourcePosn.node;
+    sourcePosn.siblings.splice(sourcePosn.index, 1);
+
+    // Find the target node in the (now modified) tree
+    const targetPosn = findNode(target.nodeId, treeData, null);
+    if (!targetPosn) {
+      // Target not found (shouldn't happen) - re-insert source where it was
+      // Just re-render to show whatever state we have
+      render();
+      return;
+    }
+
+    if (target.position === 'above') {
+      targetPosn.siblings.splice(targetPosn.index, 0, sourceNode);
+    } else if (target.position === 'below') {
+      targetPosn.siblings.splice(targetPosn.index + 1, 0, sourceNode);
+    } else if (target.position === 'into') {
+      if (!targetPosn.node.children) targetPosn.node.children = [];
+      targetPosn.node.children.push(sourceNode);
+      collapsedNodes.delete(targetPosn.node.id); // Expand target
+    }
+
+    render();
+    showToast('Moved');
   }
 
   // -- Mobile action bar (below selected node) --
@@ -1554,10 +1816,10 @@
     div.className = 'edit-row';
     div.dataset.id = row.node.id;
 
-    // Toggle placeholder for alignment
-    const placeholder = document.createElement('span');
-    placeholder.className = 'tree-toggle-placeholder';
-    div.appendChild(placeholder);
+    // Icon slots placeholder for alignment
+    const iconSlots = document.createElement('span');
+    iconSlots.className = 'icon-slots';
+    div.appendChild(iconSlots);
 
     const prefixSpan = document.createElement('span');
     prefixSpan.className = 'tree-prefix';
