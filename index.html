@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>MarcOS Tree Visualizer</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,6 +46,7 @@
     font-size: 13px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
   }
 
   .app {
@@ -97,6 +98,47 @@
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+  }
+
+  /* ── View Mode Segmented Control ── */
+  .view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .view-toggle button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .view-toggle button:last-child { border-right: none; }
+  .view-toggle button:hover { background: var(--btn-hover); color: var(--text); }
+  .view-toggle button.active {
+    background: rgba(88, 166, 255, 0.15);
+    color: var(--accent);
+  }
+
+  .view-toggle button svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
   }
 
   /* ── Buttons ── */
@@ -254,39 +296,7 @@
     flex: 1;
     overflow: auto;
     padding: 16px 20px 60px;
-  }
-
-  /* ── Mobile preview frame ── */
-  .mobile-frame {
-    width: 393px;
-    height: 852px;
-    margin: 20px auto;
-    border: 2px solid var(--border);
-    border-radius: 40px;
-    overflow: hidden;
-    position: relative;
-    background: var(--bg);
-    box-shadow: 0 0 0 4px #000, 0 0 40px rgba(0,0,0,0.5);
-  }
-
-  .mobile-frame .mobile-inner {
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    padding: 40px 12px 20px;
-  }
-
-  .mobile-frame::before {
-    content: '';
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 24px;
-    background: #000;
-    border-radius: 12px;
-    z-index: 10;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* ── Tree ── */
@@ -371,7 +381,7 @@
   .tree-type[data-type="asset"]       { color: var(--type-asset);       background: rgba(139, 148, 158, 0.15); }
   .tree-type[data-type="tooling"]     { color: var(--type-tooling);     background: rgba(118, 131, 144, 0.15); }
 
-  /* ── Inline toolbar ── */
+  /* ── Inline toolbar (desktop) ── */
   .node-toolbar {
     display: none;
     align-items: center;
@@ -420,7 +430,7 @@
     font-weight: 500;
   }
 
-  /* ── Inline edit mode ── */
+  /* ── Inline edit mode (desktop) ── */
   .edit-row {
     display: flex;
     align-items: center;
@@ -500,7 +510,365 @@
   /* ── File input (hidden) ── */
   #file-upload { display: none; }
 
-  /* ── Responsive ── */
+  /* ── Mobile hamburger menu ── */
+  .hamburger-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+  }
+
+  .mobile-menu-overlay.open { display: block; }
+
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 260px;
+    height: 100%;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 1001;
+    transform: translateX(100%);
+    transition: transform 250ms ease;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-menu.open { transform: translateX(0); }
+
+  .mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-menu-header span {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .mobile-menu-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+
+  .mobile-menu .menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-menu .menu-section-title {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .mobile-menu .menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .mobile-menu .menu-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .mobile-menu .menu-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-height: 44px;
+  }
+
+  .mobile-menu .menu-toggle-row span {
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--text);
+  }
+
+  /* ── Mobile action bar (below selected node) ── */
+  .mobile-action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 8px 8px 24px;
+    background: rgba(88, 166, 255, 0.04);
+    border-radius: 0 0 6px 6px;
+    margin-top: -2px;
+  }
+
+  .mobile-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .mobile-action-btn:active {
+    background: var(--btn-hover);
+    transform: scale(0.96);
+  }
+
+  .mobile-action-btn.danger {
+    color: var(--danger);
+  }
+
+  .mobile-action-btn.danger:active {
+    background: rgba(248, 81, 73, 0.15);
+    border-color: var(--danger);
+  }
+
+  .mobile-action-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  /* ── Mobile edit form (below node, stacked) ── */
+  .mobile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(88, 166, 255, 0.06);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 4px 0;
+  }
+
+  .mobile-edit-form input,
+  .mobile-edit-form select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 16px; /* Prevents iOS zoom */
+    font-family: var(--font-mono);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    outline: none;
+  }
+
+  .mobile-edit-form input:focus,
+  .mobile-edit-form select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.3);
+  }
+
+  .mobile-edit-form select {
+    font-family: var(--font-sans);
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8.825L1.175 4h9.65z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .mobile-edit-form .edit-form-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mobile-edit-form .edit-form-actions button {
+    flex: 1;
+    min-height: 44px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .mobile-edit-form .edit-form-btn-confirm {
+    background: rgba(63, 185, 80, 0.15);
+    color: var(--success);
+    border-color: var(--success);
+  }
+
+  .mobile-edit-form .edit-form-btn-cancel {
+    background: var(--btn-bg);
+    color: var(--text-muted);
+  }
+
+  /* ── Mobile tree row (reflowed) ── */
+  .mobile-view .tree-container {
+    font-size: 14px;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .mobile-view .tree-row {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 44px;
+    padding: 8px 6px;
+    align-items: flex-start;
+    white-space: normal;
+  }
+
+  .mobile-view .tree-row .mobile-line-1 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 28px;
+  }
+
+  .mobile-view .tree-row .mobile-desc {
+    display: block;
+    width: 100%;
+    padding-left: 4px;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-top: 2px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .mobile-view .tree-description { display: none !important; }
+  .mobile-view .node-toolbar { display: none !important; }
+
+  /* Hide desktop inline toolbar and padding spans in mobile */
+  .mobile-view .tree-row > span[style*="white-space: pre"]:not(.tree-prefix):not(.tree-name) {
+    display: none !important;
+  }
+
+  /* ── Mobile header ── */
+  .mobile-view .header {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .mobile-view .logo {
+    font-size: 14px;
+  }
+
+  .mobile-view .header-center {
+    display: none;
+  }
+
+  .mobile-view .header-right .btn {
+    display: none;
+  }
+
+  .mobile-view .hamburger-btn {
+    display: flex;
+  }
+
+  .mobile-view .main {
+    padding: 8px 4px 80px;
+  }
+
+  /* ── Mobile preview frame (desktop only) ── */
+  .mobile-frame {
+    width: 393px;
+    height: 852px;
+    margin: 20px auto;
+    border: 2px solid var(--border);
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+    box-shadow: 0 0 0 4px #000, 0 0 40px rgba(0,0,0,0.5);
+  }
+
+  .mobile-frame .mobile-inner {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 40px 12px 20px;
+  }
+
+  .mobile-frame::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 24px;
+    background: #000;
+    border-radius: 12px;
+    z-index: 10;
+  }
+
+  /* ── Responsive (keeps desktop header from wrapping badly on medium screens) ── */
   @media (max-width: 768px) {
     .header {
       padding: 8px 12px;
@@ -509,40 +877,30 @@
 
     .btn .btn-text { display: none; }
     .btn { padding: 6px 8px; }
-
     .logo { font-size: 14px; }
-
-    .main { padding: 8px 8px 60px; }
-
-    .tree-container { font-size: 12px; }
-
-    .tree-row {
-      min-height: 44px;
-      height: auto;
-      padding: 6px 4px;
-    }
-
-    .tb { width: 44px; height: 40px; font-size: 16px; }
-
-    .edit-input.name-input { width: 120px; }
-    .edit-input.desc-input { width: 140px; }
-
-    .node-toolbar { gap: 1px; margin-left: 6px; }
-  }
-
-  @media (max-width: 480px) {
-    .toggle-group .toggle-text { display: none; }
-    .header-center { gap: 4px; }
-    .tree-description { display: none; }
   }
 </style>
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="app">
   <header class="header">
     <div class="header-left">
-      <div class="logo">Marc<span>OS</span> Tree Visualizer</div>
+      <div class="logo">Marc<span>OS</span> <span class="logo-full">Tree Visualizer</span></div>
+      <div class="view-toggle" id="view-toggle">
+        <button data-view="auto" class="active" title="Auto-detect">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>
+          Auto
+        </button>
+        <button data-view="desktop" title="Desktop layout">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/></svg>
+          <span class="vt-text">Desktop</span>
+        </button>
+        <button data-view="mobile" title="Mobile layout">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h6zM5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H5z"/><path d="M8 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+          <span class="vt-text">Mobile</span>
+        </button>
+      </div>
     </div>
 
     <div class="header-center">
@@ -565,18 +923,6 @@
           <span class="toggle-text">Trailing /</span>
         </label>
       </div>
-
-      <div class="divider"></div>
-
-      <div class="toggle-group">
-        <label class="toggle-label">
-          <div class="toggle-switch">
-            <input type="checkbox" id="toggle-mobile">
-            <div class="toggle-track"></div>
-          </div>
-          <span class="toggle-text">Mobile Preview</span>
-        </label>
-      </div>
     </div>
 
     <div class="header-right">
@@ -592,12 +938,56 @@
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
         <span class="btn-text">Copy</span>
       </button>
+      <button class="hamburger-btn" id="hamburger-btn" title="Menu">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
+      </button>
       <input type="file" id="file-upload" accept=".md,.json,.txt">
     </div>
   </header>
 
   <div class="main" id="main-area">
     <div class="tree-container" id="tree-container"></div>
+  </div>
+</div>
+
+<!-- Mobile slide-out menu -->
+<div class="mobile-menu-overlay" id="menu-overlay"></div>
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-header">
+    <span>Menu</span>
+    <button class="mobile-menu-close" id="menu-close">&times;</button>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-title">Actions</div>
+    <button class="menu-btn" id="menu-upload">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 12.5a.5.5 0 0 1-1 0V6.707l-1.146 1.147a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L3.5 6.707V12.5zm3.5-9a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/></svg>
+      Upload
+    </button>
+    <button class="menu-btn" id="menu-export">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Export .md
+    </button>
+    <button class="menu-btn" id="menu-copy">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+      Copy to Clipboard
+    </button>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-title">Settings</div>
+    <div class="menu-toggle-row">
+      <span>Fancy Tree</span>
+      <div class="toggle-switch">
+        <input type="checkbox" id="menu-toggle-fancy" checked>
+        <div class="toggle-track"></div>
+      </div>
+    </div>
+    <div class="menu-toggle-row">
+      <span>Trailing /</span>
+      <div class="toggle-switch">
+        <input type="checkbox" id="menu-toggle-trailing" checked>
+        <div class="toggle-track"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -687,6 +1077,7 @@
   let selectedId = null;
   let editingId = null;
   let nextId = 1;
+  let viewMode = 'auto'; // 'auto' | 'desktop' | 'mobile'
 
   // Assign IDs recursively
   function assignIds(nodes) {
@@ -702,6 +1093,38 @@
     return JSON.parse(JSON.stringify(nodes));
   }
 
+  // ── View mode detection ──
+  function isMobileActive() {
+    if (viewMode === 'desktop') return false;
+    if (viewMode === 'mobile') return true;
+    // Auto: detect based on screen width
+    return window.innerWidth <= 768;
+  }
+
+  function applyViewMode() {
+    const app = document.getElementById('app');
+    const mobile = isMobileActive();
+    if (mobile) {
+      app.classList.add('mobile-view');
+    } else {
+      app.classList.remove('mobile-view');
+    }
+    // Sync menu toggles with header toggles
+    document.getElementById('menu-toggle-fancy').checked = document.getElementById('toggle-fancy').checked;
+    document.getElementById('menu-toggle-trailing').checked = document.getElementById('toggle-trailing').checked;
+  }
+
+  function setViewMode(mode) {
+    viewMode = mode;
+    // Update segmented control
+    document.querySelectorAll('#view-toggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === mode);
+    });
+    applyViewMode();
+    render();
+    saveToStorage();
+  }
+
   // ── Persistence ──
   const STORAGE_KEY = 'marcos-tree-visualizer-v2';
 
@@ -711,6 +1134,7 @@
         tree: treeData,
         fancy: document.getElementById('toggle-fancy').checked,
         trailing: document.getElementById('toggle-trailing').checked,
+        viewMode: viewMode,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) { /* storage full or disabled */ }
@@ -734,13 +1158,25 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
   }
 
+  // ── Menu ──
+  function openMenu() {
+    document.getElementById('menu-overlay').classList.add('open');
+    document.getElementById('mobile-menu').classList.add('open');
+  }
+
+  function closeMenu() {
+    document.getElementById('menu-overlay').classList.remove('open');
+    document.getElementById('mobile-menu').classList.remove('open');
+  }
+
   // ── Tree rendering helpers ──
   function isFolder(node) {
     return node.type === 'folder' || node.name.endsWith('/');
   }
 
   function displayName(node) {
-    const trailing = document.getElementById('toggle-trailing').checked;
+    const trailing = document.getElementById('toggle-fancy') ?
+      document.getElementById('toggle-trailing').checked : true;
     let name = node.name;
     if (trailing && isFolder(node) && !name.endsWith('/')) {
       name += '/';
@@ -754,6 +1190,7 @@
   // Flatten tree into rows with metadata
   function flattenTree(nodes, depth, parentPrefixes) {
     const fancy = document.getElementById('toggle-fancy').checked;
+    const mobile = isMobileActive();
     const rows = [];
 
     for (let i = 0; i < nodes.length; i++) {
@@ -763,10 +1200,19 @@
       let prefix = '';
       if (depth > 0) {
         prefix = parentPrefixes;
-        if (fancy) {
-          prefix += isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
+        if (mobile) {
+          // Simplified, narrower tree chars for mobile
+          if (fancy) {
+            prefix += isLast ? '\u2514 ' : '\u251C ' ;
+          } else {
+            prefix += isLast ? '` ' : '| ';
+          }
         } else {
-          prefix += isLast ? '`-- ' : '|-- ';
+          if (fancy) {
+            prefix += isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
+          } else {
+            prefix += isLast ? '`-- ' : '|-- ';
+          }
         }
       }
 
@@ -775,10 +1221,18 @@
       if (node.children && node.children.length > 0) {
         let childPrefix = parentPrefixes;
         if (depth > 0) {
-          if (fancy) {
-            childPrefix += isLast ? '    ' : '\u2502   ';
+          if (mobile) {
+            if (fancy) {
+              childPrefix += isLast ? '  ' : '\u2502 ';
+            } else {
+              childPrefix += isLast ? '  ' : '| ';
+            }
           } else {
-            childPrefix += isLast ? '    ' : '|   ';
+            if (fancy) {
+              childPrefix += isLast ? '    ' : '\u2502   ';
+            } else {
+              childPrefix += isLast ? '    ' : '|   ';
+            }
           }
         }
         const childRows = flattenTree(node.children, depth + 1, childPrefix);
@@ -789,7 +1243,7 @@
     return rows;
   }
 
-  // Compute column positions for alignment
+  // Compute column positions for alignment (desktop only)
   function computeColumns(rows) {
     let maxNameCol = 0;
     let maxDescCol = 0;
@@ -799,7 +1253,6 @@
       if (nameLen > maxNameCol) maxNameCol = nameLen;
     }
 
-    // Description starts 8 chars after longest name
     const descStart = maxNameCol + 8;
 
     for (const row of rows) {
@@ -808,7 +1261,6 @@
       if (descLen > maxDescCol) maxDescCol = descLen;
     }
 
-    // Type badge starts 4 chars after longest description
     const typeStart = descStart + maxDescCol + 4;
 
     return { descStart, typeStart };
@@ -816,46 +1268,66 @@
 
   // ── Render tree ──
   function render() {
+    applyViewMode();
     const container = document.getElementById('tree-container');
+    const mobile = isMobileActive();
     const rows = flattenTree(treeData, 0, '');
-    const cols = computeColumns(rows);
+    const cols = mobile ? null : computeColumns(rows);
 
     container.innerHTML = '';
 
     for (const row of rows) {
       if (editingId === row.node.id) {
-        container.appendChild(createEditRow(row, cols));
+        if (mobile) {
+          container.appendChild(createMobileViewRow(row, true));
+          container.appendChild(createMobileEditForm(row));
+        } else {
+          container.appendChild(createEditRow(row, cols));
+        }
       } else {
-        container.appendChild(createViewRow(row, cols));
+        if (mobile) {
+          container.appendChild(createMobileViewRow(row, false));
+          // If selected, add action bar below
+          if (selectedId === row.node.id) {
+            container.appendChild(createMobileActionBar(row.node.id));
+          }
+        } else {
+          container.appendChild(createViewRow(row, cols));
+        }
       }
     }
 
     saveToStorage();
+
+    // Scroll selected node into view
+    if (selectedId) {
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-id="${selectedId}"]`);
+        if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
   }
 
+  // ── Desktop view row ──
   function createViewRow(row, cols) {
     const div = document.createElement('div');
     div.className = 'tree-row' + (selectedId === row.node.id ? ' selected' : '');
     div.dataset.id = row.node.id;
 
-    // Prefix (tree chars)
     const prefixSpan = document.createElement('span');
     prefixSpan.className = 'tree-prefix';
     prefixSpan.textContent = row.prefix;
     div.appendChild(prefixSpan);
 
-    // Name
     const name = displayName(row.node);
     const nameSpan = document.createElement('span');
     nameSpan.className = 'tree-name' + (isFolder(row.node) ? ' is-folder' : '');
     nameSpan.textContent = name;
     div.appendChild(nameSpan);
 
-    // Pad between name and description
     const nameLen = row.prefix.length + name.length;
     const descPad = Math.max(cols.descStart - nameLen, 4);
 
-    // Description
     const desc = row.node.desc || '';
     if (desc) {
       const descSpan = document.createElement('span');
@@ -863,7 +1335,6 @@
       descSpan.textContent = ' '.repeat(descPad) + desc;
       div.appendChild(descSpan);
 
-      // Pad between description and type
       const descLen = cols.descStart + desc.length;
       const typePad = Math.max(cols.typeStart - descLen, 3);
       const padSpan = document.createElement('span');
@@ -871,7 +1342,6 @@
       padSpan.textContent = ' '.repeat(typePad);
       div.appendChild(padSpan);
     } else {
-      // No description — pad from name to type column
       const typePad = Math.max(cols.typeStart - nameLen, 3);
       const padSpan = document.createElement('span');
       padSpan.style.whiteSpace = 'pre';
@@ -879,7 +1349,6 @@
       div.appendChild(padSpan);
     }
 
-    // Type badge
     if (row.node.type) {
       const typeSpan = document.createElement('span');
       typeSpan.className = 'tree-type';
@@ -888,7 +1357,7 @@
       div.appendChild(typeSpan);
     }
 
-    // Inline toolbar
+    // Inline toolbar (desktop)
     const toolbar = document.createElement('span');
     toolbar.className = 'node-toolbar';
     toolbar.innerHTML = `
@@ -903,14 +1372,12 @@
     `;
     div.appendChild(toolbar);
 
-    // Click to select
     div.addEventListener('click', (e) => {
       if (e.target.closest('.node-toolbar')) return;
       selectedId = (selectedId === row.node.id) ? null : row.node.id;
       render();
     });
 
-    // Toolbar actions
     toolbar.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action]');
       if (!btn) return;
@@ -921,18 +1388,173 @@
     return div;
   }
 
+  // ── Mobile view row (reflowed: name+type on line 1, desc on line 2) ──
+  function createMobileViewRow(row, isEditing) {
+    const div = document.createElement('div');
+    div.className = 'tree-row' + (selectedId === row.node.id && !isEditing ? ' selected' : '');
+    div.dataset.id = row.node.id;
+
+    // Line 1: prefix + name + type pill
+    const line1 = document.createElement('div');
+    line1.className = 'mobile-line-1';
+
+    const prefixSpan = document.createElement('span');
+    prefixSpan.className = 'tree-prefix';
+    prefixSpan.textContent = row.prefix;
+    line1.appendChild(prefixSpan);
+
+    const name = displayName(row.node);
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'tree-name' + (isFolder(row.node) ? ' is-folder' : '');
+    nameSpan.textContent = name;
+    line1.appendChild(nameSpan);
+
+    if (row.node.type) {
+      const spacer = document.createElement('span');
+      spacer.textContent = ' ';
+      line1.appendChild(spacer);
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'tree-type';
+      typeSpan.dataset.type = row.node.type;
+      typeSpan.textContent = row.node.type;
+      line1.appendChild(typeSpan);
+    }
+
+    div.appendChild(line1);
+
+    // Line 2: description (if exists)
+    const desc = row.node.desc || '';
+    if (desc) {
+      const descDiv = document.createElement('div');
+      descDiv.className = 'mobile-desc';
+      // Indent the description to align with name (account for prefix width)
+      const indentChars = row.prefix.length;
+      descDiv.style.paddingLeft = (indentChars * 8.4 + 4) + 'px'; // Approximate ch width at 14px mono
+      descDiv.textContent = desc;
+      div.appendChild(descDiv);
+    }
+
+    if (!isEditing) {
+      div.addEventListener('click', (e) => {
+        if (e.target.closest('.mobile-action-bar')) return;
+        selectedId = (selectedId === row.node.id) ? null : row.node.id;
+        editingId = null;
+        render();
+      });
+    }
+
+    return div;
+  }
+
+  // ── Mobile action bar (below selected node) ──
+  function createMobileActionBar(nodeId) {
+    const bar = document.createElement('div');
+    bar.className = 'mobile-action-bar';
+
+    const actions = [
+      { label: '+ Child', action: 'child', icon: null },
+      { label: '+ Sibling', action: 'sibling', icon: null },
+      { label: '\u2192', action: 'indent', title: 'Indent' },
+      { label: '\u2190', action: 'unindent', title: 'Unindent' },
+      { label: '\u2191', action: 'move-up', title: 'Move up' },
+      { label: '\u2193', action: 'move-down', title: 'Move down' },
+      { label: 'Edit', action: 'edit', icon: null },
+      { label: '\u2715 Delete', action: 'delete', danger: true },
+    ];
+
+    for (const a of actions) {
+      const btn = document.createElement('button');
+      btn.className = 'mobile-action-btn' + (a.danger ? ' danger' : '');
+      btn.textContent = a.label;
+      if (a.title) btn.title = a.title;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleAction(a.action, nodeId);
+      });
+      bar.appendChild(btn);
+    }
+
+    return bar;
+  }
+
+  // ── Mobile edit form (stacked inputs below node) ──
+  function createMobileEditForm(row) {
+    const form = document.createElement('div');
+    form.className = 'mobile-edit-form';
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = row.node.name;
+    nameInput.placeholder = 'Name';
+    form.appendChild(nameInput);
+
+    const descInput = document.createElement('input');
+    descInput.type = 'text';
+    descInput.value = row.node.desc || '';
+    descInput.placeholder = 'Description (optional)';
+    form.appendChild(descInput);
+
+    const typeSelect = document.createElement('select');
+    for (const t of TYPES) {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      if (t === row.node.type) opt.selected = true;
+      typeSelect.appendChild(opt);
+    }
+    form.appendChild(typeSelect);
+
+    const actions = document.createElement('div');
+    actions.className = 'edit-form-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'edit-form-btn-cancel';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => cancelEdit());
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'edit-form-btn-confirm';
+    confirmBtn.textContent = 'Save';
+    confirmBtn.addEventListener('click', () => {
+      commitEdit(row.node.id, nameInput.value, descInput.value, typeSelect.value);
+    });
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    form.appendChild(actions);
+
+    // Keyboard: Enter to save
+    function handleKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitEdit(row.node.id, nameInput.value, descInput.value, typeSelect.value);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelEdit();
+      }
+    }
+
+    nameInput.addEventListener('keydown', handleKey);
+    descInput.addEventListener('keydown', handleKey);
+    typeSelect.addEventListener('keydown', handleKey);
+
+    requestAnimationFrame(() => nameInput.focus());
+
+    return form;
+  }
+
+  // ── Desktop edit row ──
   function createEditRow(row, cols) {
     const div = document.createElement('div');
     div.className = 'edit-row';
     div.dataset.id = row.node.id;
 
-    // Prefix
     const prefixSpan = document.createElement('span');
     prefixSpan.className = 'tree-prefix';
     prefixSpan.textContent = row.prefix;
     div.appendChild(prefixSpan);
 
-    // Name input
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.className = 'edit-input name-input';
@@ -940,14 +1562,12 @@
     nameInput.placeholder = 'name';
     div.appendChild(nameInput);
 
-    // Hash separator
     const hash = document.createElement('span');
     hash.style.color = 'var(--text-muted)';
     hash.style.padding = '0 4px';
     hash.textContent = '#';
     div.appendChild(hash);
 
-    // Description input
     const descInput = document.createElement('input');
     descInput.type = 'text';
     descInput.className = 'edit-input desc-input';
@@ -955,7 +1575,6 @@
     descInput.placeholder = 'description';
     div.appendChild(descInput);
 
-    // Type select
     const typeSelect = document.createElement('select');
     typeSelect.className = 'edit-select';
     for (const t of TYPES) {
@@ -967,7 +1586,6 @@
     }
     div.appendChild(typeSelect);
 
-    // Action buttons
     const actions = document.createElement('span');
     actions.className = 'edit-actions';
 
@@ -987,7 +1605,6 @@
     actions.appendChild(cancelBtn);
     div.appendChild(actions);
 
-    // Keyboard handlers
     function handleKey(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -1002,7 +1619,6 @@
     descInput.addEventListener('keydown', handleKey);
     typeSelect.addEventListener('keydown', handleKey);
 
-    // Auto-focus name input after render
     requestAnimationFrame(() => nameInput.focus());
 
     return div;
@@ -1010,7 +1626,6 @@
 
   // ── Tree operations ──
 
-  // Find node and its parent array
   function findNode(id, nodes, parent) {
     for (let i = 0; i < nodes.length; i++) {
       if (nodes[i].id === id) {
@@ -1053,7 +1668,6 @@
         break;
       }
       case 'indent': {
-        // Make child of previous sibling
         if (index === 0) return;
         const prevSibling = siblings[index - 1];
         if (!prevSibling.children) prevSibling.children = [];
@@ -1063,14 +1677,11 @@
         break;
       }
       case 'unindent': {
-        // Promote to parent level
         if (!parent) return;
         const parentFound = findNode(parent.id, treeData, null);
         if (!parentFound) return;
         const parentIndex = parentFound.index;
-        // Remove from current siblings
         siblings.splice(index, 1);
-        // Insert after parent in parent's siblings
         parentFound.siblings.splice(parentIndex + 1, 0, node);
         render();
         break;
@@ -1109,7 +1720,6 @@
     if (!found) return;
     const trimName = name.trim();
     if (!trimName) {
-      // If name is empty on a brand new node, just delete it
       if (found.node.name === 'New Item') {
         found.siblings.splice(found.index, 1);
         if (selectedId === nodeId) selectedId = null;
@@ -1126,7 +1736,6 @@
   }
 
   function cancelEdit() {
-    // If the node is brand new (still "New Item"), remove it
     if (editingId) {
       const found = findNode(editingId, treeData, null);
       if (found && found.node.name === 'New Item') {
@@ -1165,7 +1774,6 @@
     const trailing = document.getElementById('toggle-trailing').checked;
     let out = '';
 
-    // Compute max name length for alignment in this tree
     const allRows = flattenTree(nodes, depth, parentPrefixes);
     const cols = computeColumns(flattenTree(treeData, 0, ''));
 
@@ -1189,7 +1797,6 @@
 
       let line = prefix + name;
 
-      // Add description with alignment
       const nameLen = prefix.length + name.length;
       const desc = node.desc || '';
       if (desc) {
@@ -1197,7 +1804,6 @@
         line += ' '.repeat(descPad) + '# ' + desc;
       }
 
-      // Add type
       if (node.type) {
         if (!desc) {
           const typePad = Math.max(cols.descStart - nameLen, 4);
@@ -1238,33 +1844,28 @@
       const indent = match ? match[1].length : 0;
       const content = line.trim();
 
-      // Parse: name # description [type]
       let name = content;
       let desc = '';
       let type = 'folder';
 
-      // Extract [type] at end
       const typeMatch = name.match(/\s*\[(\w+)\]\s*$/);
       if (typeMatch) {
         type = typeMatch[1];
         name = name.slice(0, typeMatch.index).trim();
       }
 
-      // Extract # description
       const hashMatch = name.match(/\s+#\s+(.+)$/);
       if (hashMatch) {
         desc = hashMatch[1].trim();
         name = name.slice(0, hashMatch.index).trim();
       }
 
-      // Strip tree-drawing chars
       name = name.replace(/^[\u2502\u251C\u2514\u2500`|\-\s]+/, '').trim();
 
       if (!name) continue;
 
       const node = { id: nextId++, name, desc, type, children: [] };
 
-      // Find parent based on indent
       while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
         stack.pop();
       }
@@ -1307,11 +1908,9 @@
       const indent = match ? match[1].length : 0;
       let name = line.trim();
 
-      // Strip tree chars
       name = name.replace(/^[\u2502\u251C\u2514\u2500`|\-\s]+/, '').trim();
       if (!name) continue;
 
-      // Guess type from name
       let type = 'folder';
       if (name.endsWith('/')) type = 'folder';
       else if (name.includes('.')) type = 'thread';
@@ -1329,40 +1928,10 @@
     return root;
   }
 
-  // ── Mobile preview ──
-
-  function toggleMobilePreview(on) {
-    const main = document.getElementById('main-area');
-    const container = document.getElementById('tree-container');
-
-    if (on) {
-      // Wrap tree in mobile frame
-      let frame = document.getElementById('mobile-frame');
-      if (!frame) {
-        frame = document.createElement('div');
-        frame.className = 'mobile-frame';
-        frame.id = 'mobile-frame';
-        const inner = document.createElement('div');
-        inner.className = 'mobile-inner';
-        frame.appendChild(inner);
-      }
-      frame.querySelector('.mobile-inner').appendChild(container);
-      main.innerHTML = '';
-      main.appendChild(frame);
-    } else {
-      // Unwrap
-      const frame = document.getElementById('mobile-frame');
-      if (frame) {
-        main.innerHTML = '';
-        main.appendChild(container);
-      }
-    }
-  }
-
   // ── Keyboard shortcuts ──
 
   document.addEventListener('keydown', (e) => {
-    if (editingId) return; // Don't interfere with editing
+    if (editingId) return;
 
     if (e.key === 'Delete' || e.key === 'Backspace') {
       if (selectedId && !editingId) {
@@ -1419,18 +1988,56 @@
     if (newIdx >= 0 && newIdx < rows.length) {
       selectedId = rows[newIdx].node.id;
       render();
-      // Scroll into view
-      const el = document.querySelector(`[data-id="${selectedId}"]`);
-      if (el) el.scrollIntoView({ block: 'nearest' });
     }
+  }
+
+  // ── Perform action (shared between desktop buttons and menu) ──
+  function doUpload() {
+    document.getElementById('file-upload').click();
+    closeMenu();
+  }
+
+  function doExport() {
+    const md = treeToMd(treeData, '');
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tree.md';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Exported tree.md');
+    closeMenu();
+  }
+
+  function doCopy() {
+    const ascii = treeToAscii(treeData, 0, '');
+    navigator.clipboard.writeText(ascii).then(() => {
+      showToast('Copied to clipboard');
+    }).catch(() => {
+      showToast('Copy failed');
+    });
+    closeMenu();
   }
 
   // ── Event bindings ──
 
-  document.getElementById('btn-upload').addEventListener('click', () => {
-    document.getElementById('file-upload').click();
-  });
+  // Desktop buttons
+  document.getElementById('btn-upload').addEventListener('click', doUpload);
+  document.getElementById('btn-export').addEventListener('click', doExport);
+  document.getElementById('btn-copy').addEventListener('click', doCopy);
 
+  // Mobile menu buttons
+  document.getElementById('menu-upload').addEventListener('click', doUpload);
+  document.getElementById('menu-export').addEventListener('click', doExport);
+  document.getElementById('menu-copy').addEventListener('click', doCopy);
+
+  // Hamburger
+  document.getElementById('hamburger-btn').addEventListener('click', openMenu);
+  document.getElementById('menu-close').addEventListener('click', closeMenu);
+  document.getElementById('menu-overlay').addEventListener('click', closeMenu);
+
+  // File upload handler
   document.getElementById('file-upload').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1461,37 +2068,37 @@
     e.target.value = '';
   });
 
-  document.getElementById('btn-export').addEventListener('click', () => {
-    const md = treeToMd(treeData, '');
-    const blob = new Blob([md], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'tree.md';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Exported tree.md');
+  // Header toggles (desktop)
+  document.getElementById('toggle-fancy').addEventListener('change', () => {
+    document.getElementById('menu-toggle-fancy').checked = document.getElementById('toggle-fancy').checked;
+    render();
   });
-
-  document.getElementById('btn-copy').addEventListener('click', () => {
-    const ascii = treeToAscii(treeData, 0, '');
-    navigator.clipboard.writeText(ascii).then(() => {
-      showToast('Copied to clipboard');
-    }).catch(() => {
-      showToast('Copy failed');
-    });
-  });
-
-  document.getElementById('toggle-fancy').addEventListener('change', () => render());
-  document.getElementById('toggle-trailing').addEventListener('change', () => render());
-  document.getElementById('toggle-mobile').addEventListener('change', (e) => {
-    toggleMobilePreview(e.target.checked);
+  document.getElementById('toggle-trailing').addEventListener('change', () => {
+    document.getElementById('menu-toggle-trailing').checked = document.getElementById('toggle-trailing').checked;
     render();
   });
 
-  // ── Click outside to deselect ──
+  // Menu toggles (mobile) -- sync back to header toggles
+  document.getElementById('menu-toggle-fancy').addEventListener('change', () => {
+    document.getElementById('toggle-fancy').checked = document.getElementById('menu-toggle-fancy').checked;
+    render();
+  });
+  document.getElementById('menu-toggle-trailing').addEventListener('change', () => {
+    document.getElementById('toggle-trailing').checked = document.getElementById('menu-toggle-trailing').checked;
+    render();
+  });
+
+  // View toggle
+  document.getElementById('view-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    setViewMode(btn.dataset.view);
+  });
+
+  // Click outside to deselect
   document.getElementById('main-area').addEventListener('click', (e) => {
-    if (!e.target.closest('.tree-row') && !e.target.closest('.edit-row')) {
+    if (!e.target.closest('.tree-row') && !e.target.closest('.edit-row') &&
+        !e.target.closest('.mobile-action-bar') && !e.target.closest('.mobile-edit-form')) {
       if (!editingId) {
         selectedId = null;
         render();
@@ -1499,20 +2106,48 @@
     }
   });
 
+  // Responsive: re-evaluate view mode on resize (only matters for auto)
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (viewMode === 'auto') {
+        applyViewMode();
+        render();
+      }
+    }, 150);
+  });
+
+  // Prevent body scroll when tree is scrolling on mobile
+  document.querySelector('.main').addEventListener('touchmove', (e) => {
+    e.stopPropagation();
+  }, { passive: true });
+
   // ── Init ──
   const saved = loadFromStorage();
   if (saved && saved.tree && saved.tree.length > 0) {
     treeData = saved.tree;
-    // Re-assign IDs to ensure nextId is correct
     nextId = 1;
     assignIds(treeData);
     if (typeof saved.fancy === 'boolean') document.getElementById('toggle-fancy').checked = saved.fancy;
     if (typeof saved.trailing === 'boolean') document.getElementById('toggle-trailing').checked = saved.trailing;
+    if (saved.viewMode && ['auto', 'desktop', 'mobile'].includes(saved.viewMode)) {
+      viewMode = saved.viewMode;
+    }
   } else {
     treeData = cloneTree(DEFAULT_TREE);
     nextId = 1;
     assignIds(treeData);
   }
+
+  // Apply saved view mode to toggle buttons
+  document.querySelectorAll('#view-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === viewMode);
+  });
+
+  // Sync menu toggles
+  document.getElementById('menu-toggle-fancy').checked = document.getElementById('toggle-fancy').checked;
+  document.getElementById('menu-toggle-trailing').checked = document.getElementById('toggle-trailing').checked;
 
   render();
 
